@@ -10,11 +10,31 @@ Route::get('/', function () {
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
     ]);
-});
+})->name('landing');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
+        $totalEvents = auth()->user()->events()->count();
+        $totalUpcomingEvents = auth()->user()->events()->whereHas('details', function ($query) {
+            $query->where('status', 'upcoming');
+        })->count();
+        $upcomingEventsList = auth()->user()->events()->whereHas('details', function ($query) {
+            $query->where('status', 'upcoming');
+        })->with('details')->get();
+
+        $totalOrders = auth()->user()->orders()->count();
+        $totalRevenue = auth()->user()->orders()->where('status', 'completed')->sum('amount');
+
+        $latestActions = auth()->user()->actions()->with('event')->latest()->take(5)->get();
+
+        return Inertia::render('Dashboard', [
+            'totalEvents' => $totalEvents,
+            'totalUpcomingEvents' => $totalUpcomingEvents,
+            'totalOrders' => $totalOrders,
+            'totalRevenue' => $totalRevenue,
+            'upcomingEventsList' => $upcomingEventsList,
+            'latestActions' => $latestActions,
+        ]);
     })->name('dashboard');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
