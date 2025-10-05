@@ -24,7 +24,8 @@ return new class extends Migration
             $table->string('type');
             $table->date('date');
             $table->time('time_start');
-            $table->time('time_end');
+            $table->time('time_end')->nullable();
+            $table->string('status');
             $table->string('loc_venue');
             $table->string('loc_address');
             $table->timestamps();
@@ -42,8 +43,8 @@ return new class extends Migration
         Schema::create('event_overlays', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
-            $table->string('landing_img');
-            $table->string('frame_img');
+            $table->string('landing_img')->nullable();
+            $table->string('frame_img')->nullable();
             $table->timestamps();
         });
     }
