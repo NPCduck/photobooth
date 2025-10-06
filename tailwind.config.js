@@ -15,6 +15,18 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                sidebarbg: {
+                    DEFAULT: '#2f2f2f',
+                    dark: '#232323',
+                },
+                overlaybg: {
+                    DEFAULT: '#F0EDED',
+                },
+                highlight: {
+                    DEFAULT: '#505050'
+                }
+            }
         },
     },
 

@@ -14,15 +14,15 @@ class Event extends Model
     protected $with = ['details', 'packages', 'overlays'];
 
     public function details() {
-        return $this->hasOne(EventDetail::class);
+        return $this->hasOne(EventDetails::class);
     }
 
     public function packages() {
-        return $this->hasMany(EventPackage::class);
+        return $this->hasMany(EventPackages::class);
     }
 
     public function overlays() {
-        return $this->hasOne(EventOverlay::class);
+        return $this->hasOne(EventOverlays::class);
     }
 
     public function user() {

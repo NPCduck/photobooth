@@ -32,6 +32,7 @@ class EventController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'details.type' => 'required|string|max:255',
+            'details.status' => 'required|string|max:255',
             'details.date' => 'required|date',
             'details.time_start' => 'required|string|max:255',
             'details.time_end' => 'nullable|string|max:255',
@@ -76,6 +77,7 @@ class EventController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'details.type' => 'required|string|max:255',
+            'details.status' => 'required|string|max:255',
             'details.date' => 'required|date',
             'details.time_start' => 'required|string|max:255',
             'details.time_end' => 'nullable|string|max:255',

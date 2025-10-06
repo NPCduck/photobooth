@@ -22,6 +22,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
             $table->string('type');
+            $table->string('status');
             $table->date('date');
             $table->time('time_start');
             $table->time('time_end')->nullable();
