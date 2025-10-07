@@ -3,6 +3,8 @@ import { ref, computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 
+import { LayoutDashboard, Calendar, ShoppingCart, ShoppingBasket, Settings, User, LogOut } from 'lucide-vue-next';
+
 const isOpen = ref(false);
 const toggleSidebar = () => (isOpen.value = !isOpen.value);
 
@@ -11,24 +13,28 @@ const currentRoute = computed(() => page.component);
 
 const menuItems = ref([
   {
-    label: 'Dashboard',
+    label: 'Nástenka',
     route: 'dashboard',
-    icon: 'dashboard-ico.png',
+    icon: LayoutDashboard,
     children: [],
     open: false,
     selectedChild: null,
   },
   {
-    label: 'Events',
-    icon: 'events-ico.png',
-    children: [{ label: 'Event manager', route: 'events.index' }],
+    label: 'Eventy',
+    icon: Calendar,
+    children: [
+      { label: 'Zoznam eventov', route: 'events.index' }
+    ],
     open: false,
     selectedChild: null,
   },
   {
-    label: 'Profile',
-    icon: 'profile-ico.png',
-    children: [{ label: 'User profile', route: 'profile.edit' }],
+    label: 'Profil',
+    icon: User,
+    children: [
+      { label: 'Spravovať účet', route: 'profile.edit' }
+    ],
     open: false,
     selectedChild: null,
   },
@@ -63,7 +69,7 @@ function selectChild(item, child) {
   <!-- mobile toggle -->
   <button
     @click="toggleSidebar"
-    class="md:hidden fixed top-4 left-4 z-50 bg-indigo-600 text-white p-2 rounded-lg"
+    class="md:hidden fixed top-4 left-4 z-50 bg-sidebarbg text-white p-2 rounded-lg"
   >
     ☰
   </button>
@@ -78,17 +84,18 @@ function selectChild(item, child) {
   <!-- sidebar -->
   <aside
     :class="[
-      'fixed flex flex-col justify-between display-column md:sticky top-[15px] left-[15px] ml-5 h-[calc(100vh-30px)] bg-sidebarbg rounded-md shadow-md w-64 z-50 transform transition-transform duration-300 text-white',
+      'fixed flex flex-col justify-between display-column md:sticky top-[15px] h-[calc(100vh-30px)] bg-sidebarbg rounded-md shadow-md w-72 z-50 transform transition-transform duration-300 text-white',
       isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
     ]"
   >
     <div>
-      <div class="p-4 font-bold text-center text-white text-lg">PhotoBooth</div>
+      <div class="p-4 font-bold text-center text-white text-[25px]">PhotoBooth</div>
 
       <nav class="p-4 ml-4 mr-4 space-y-2 bg-sidebarbg-dark rounded-md">
         <ul>
           <li v-for="item in menuItems" :key="item.label" class="mb-2">
             <!-- Ak má children → správa sa ako toggle -->
+             
             <Link
               v-if="item.children?.length"
               :href=" route(item.children[0].route) "
@@ -99,7 +106,11 @@ function selectChild(item, child) {
                   item.selectedChild && route().current(item.selectedChild),
               }"
             >
-              <span>{{ item.label }}</span>
+              <div class="flex items-center flex-row">
+                <component :is="item.icon" class="w-5 h-5 mr-2" />
+                <span>{{ item.label }}</span>
+              </div>
+
               <svg
                 class="w-4 h-4 transition-transform duration-200"
                 :class="{ 'rotate-90': item.open }"
@@ -120,13 +131,14 @@ function selectChild(item, child) {
             <Link
               v-else
               :href="route(item.route)"
-              class="block px-3 py-2 rounded-md hover:bg-highlight"
+              class="w-full text-left px-3 py-2 rounded-md hover:bg-highlight flex items-center"
               :class="{
                 'bg-highlight font-medium':
                   route().current(item.route),
               }"
             >
-              {{ item.label }}
+              <component :is="item.icon" class="w-5 h-5 mr-2" />
+              <span>{{ item.label }}</span>
             </Link>
 
             <!-- Dropdown deti -->
@@ -154,10 +166,10 @@ function selectChild(item, child) {
       </nav>
     </div>
     <Button
-      class="block bg-sidebarbg-dark w-32 rounded-md p-4 text-center ml-4 mb-4 hover:bg-highlight"
+      class="inline-flex self-start items-center justify-center bg-sidebarbg-dark rounded-md p-2 ml-4 mb-4 hover:bg-highlight"
       @click="$inertia.post(route('logout'))"
     >
-      Log out
+      <LogOut />
   </Button>
   </aside>
 </template>

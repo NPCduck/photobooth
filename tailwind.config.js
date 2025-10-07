@@ -25,7 +25,8 @@ export default {
                 },
                 highlight: {
                     DEFAULT: '#505050'
-                }
+                },
+                text: '#232323',
             }
         },
     },

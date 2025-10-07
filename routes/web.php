@@ -17,10 +17,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', function () {
         $totalEvents = auth()->user()->events()->count();
         $totalUpcomingEvents = auth()->user()->events()->whereHas('details', function ($query) {
-            $query->where('status', 'upcoming');
+            $query->where('status', 'aktuálny');
         })->count();
         $upcomingEventsList = auth()->user()->events()->whereHas('details', function ($query) {
-            $query->where('status', 'upcoming');
+            $query->where('status', 'aktuálny');
         })->with('details')->get();
 
         $totalOrders = auth()->user()->orders()->count();

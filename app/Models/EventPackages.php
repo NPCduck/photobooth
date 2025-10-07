@@ -3,9 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class EventPackage extends Model
+class EventPackages extends Model
 {
+
+    use HasFactory;
+
     protected $fillable = [
         'event_id',
         'name',
