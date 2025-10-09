@@ -40,4 +40,8 @@ class Event extends Model
     public function actions() {
         return $this->hasMany(Action::class);
     }
+
+    public function client() {
+        return $this->hasOne(EventClient::class);
+    }
 }
