@@ -14,6 +14,7 @@ class EventDetails extends Model
         'event_id',
         'type',
         'status',
+        'hosts',
         'date',
         'time_start',
         'time_end',

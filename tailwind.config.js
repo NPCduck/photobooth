@@ -26,7 +26,11 @@ export default {
                 highlight: {
                     DEFAULT: '#505050'
                 },
+                itembg: {
+                    DEFAULT: 'rgba(0, 0, 0, .05)',
+                },
                 text: '#232323',
+                
             }
         },
     },

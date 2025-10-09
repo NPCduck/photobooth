@@ -15,13 +15,13 @@ class EventPackagesFactory extends Factory
      * @return array<string, mixed>
      */
 
-    protected $model = \App\Models\EventOverlays::class;
+    protected $model = \App\Models\EventPackages::class;
 
     public function definition(): array
     {
         return [
             'name' => $this->faker->words($nb = 1, $asText = true),
-            'price' => $this->faker->price($min = 2, $max = 15),
+            'price' => $this->faker->randomFloat(2, 3, 15),
             'photo_limit' => $this->faker->numberBetween($min = 0, $max = 50)
         ];
     }

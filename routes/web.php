@@ -21,7 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
         })->count();
         $upcomingEventsList = auth()->user()->events()->whereHas('details', function ($query) {
             $query->where('status', 'aktuálny');
-        })->with('details')->get();
+        })->with('details')->take(3)->get();
 
         $totalOrders = auth()->user()->orders()->count();
         $totalRevenue = auth()->user()->orders()->where('status', 'completed')->sum('amount');

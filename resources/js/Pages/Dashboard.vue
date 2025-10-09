@@ -1,10 +1,11 @@
 <script setup>
-import { CalendarCheck, CalendarClock, DollarSign, ShoppingBasket, Eye } from 'lucide-vue-next';
+import { CalendarCheck, CalendarClock, DollarSign, ShoppingBasket, Eye, Info } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
 
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DisplayStats from '@/Components/DisplayStats.vue';
 import EventItem from '@/Components/EventItem.vue';
+import ActionItem from '@/Components/ActionItem.vue';
 
 const props = defineProps({
     totalEvents: Number,
@@ -14,17 +15,26 @@ const props = defineProps({
     upcomingEventsList: Array,
     latestActions: Array
 });
+console.log('TotalUpcomingEvents: ' + props.totalUpcomingEvents);
+
+function minAgo (timestamp) {
+    const created = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - created;
+    const diffMin = Math.floor(diffMs / 1000 / 60);
+    return diffMin;
+}
 </script>
 
 <template>
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl mb-4 font-semibold leading-tight text-gray-800">
+            <h2 class="text-3xl mb-4 font-normal leading-tight text-gray-800">
                 Nástenka
             </h2>
         </template>
         <template #default>
-            <div class="ml-4 mr-4 flex flex-col gap-4">
+            <div class="flex flex-col gap-4 w-full">
                 <!-- Basic stats -->
                 <div class="flex justify-between flex-row gap-4">
                     <DisplayStats>
@@ -32,7 +42,7 @@ const props = defineProps({
                             <CalendarCheck />
                         </template>
                         <template #value>
-                            {{ props.totalEvents }}
+                            {{ totalEvents }}
                         </template>
                         Počet eventov
                     </DisplayStats>
@@ -41,7 +51,7 @@ const props = defineProps({
                             <CalendarClock />
                         </template>
                         <template #value>
-                            {{ props.totalUpcomingEvents }}
+                            {{ totalUpcomingEvents }}
                         </template>
                         Aktuálne eventy
                     </DisplayStats>
@@ -50,7 +60,7 @@ const props = defineProps({
                             <ShoppingBasket />
                         </template>
                         <template #value>
-                            {{ props.totalOrders }}
+                            {{ totalOrders }}
                         </template>
                         Celkové objednávky
                     </DisplayStats>
@@ -59,7 +69,7 @@ const props = defineProps({
                             <DollarSign />
                         </template>
                         <template #value>
-                            {{ props.totalRevenue }} €
+                            {{ totalRevenue }} €
                         </template>
                         Celkové obraty
                     </DisplayStats>
@@ -67,39 +77,45 @@ const props = defineProps({
 
                 <!-- Upcoming events -->
                 <div>
-                    <p class="text-[25px] font-[100]">
-                        Naplánované eventy
-                    </p>
-                    <div class="flex flex-col bg-white shadow rounded-md h-64">
+                    <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
+                        <p class="font-thin text-[25px]">
+                            Naplánované eventy
+                        </p>
                         <ul>
-                            <div v-if="upcomingEventsList.length">
-                                <EventItem v-for="event in upcomingEventsList" :key="event.name">
+                            <div v-if="upcomingEventsList.length" class="flex flex-col gap-4">
+                                <EventItem
+                                    v-for="event in upcomingEventsList"
+                                    :key="event.name"
+                                    class="rounded-md align-center flex"
+                                >
                                     <template #name>
-                                        {{ event.name }}
+                                        <span class="text-xl">{{ event.name }}</span>
                                     </template>
 
                                     <template #attributes>
                                         <div>
-                                            <span>Lokácia:</span>
-                                            {{ event.details.loc_address }}
+                                            <span><b>Lokácia:</b></span>
+                                            {{ event.details.loc_venue }}
+                                            <span><b>Dátum:</b></span>
+                                            {{ event.details.date }}
                                         </div>
                                     </template>
-                                        <div>
-                                            <Link
-                                                :href="route('events.show', event.id)"
-                                            >
-                                                <Eye />
-                                            </Link>
-                                        </div>
+                                    
                                     <template #buttons>
-
+                                        <Link
+                                            :href="route('events.show', event)"
+                                        >
+                                            <div class="hover:bg-itembg rounded-md p-1">
+                                                <Eye />
+                                            </div>
+                                        </Link>
                                     </template>
                                 </EventItem>
                             </div>
                             
                             <div v-else>
                                 <h2 class="text-[20px]">
-                                    Neboli nájdené žiadne výsledky!
+                                    Neboli nájdené žiadne výsledky
                                 </h2>
                             </div>
                         </ul>
@@ -108,12 +124,32 @@ const props = defineProps({
 
                 <!-- Latest actions -->
                 <div>
-                    <p class="text-[25px] font-[100]">
-                        Nedávna aktivita
-                    </p>
-                    <div class="flex flex-col bg-white shadow rounded-md h-64">
+                    <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
+                        <p class="text-[25px] font-[100]">
+                            Nedávna aktivita
+                        </p>
                         <ul>
-
+                            <div
+                                v-if="latestActions.length"
+                                class="flex flex-1 h-38 flex-col gap-4"
+                            >
+                                <ActionItem v-for="action in latestActions" :key="action.id">
+                                    <template #icon>
+                                        <Info />
+                                    </template>
+                                    <template #name>
+                                        <span class="text-lg">{{ action.action_type }} - {{ action.event.name }}</span>
+                                    </template>
+                                    <template #ago>
+                                        <span class="text-gray-500 text-sm">{{ minAgo(action.created_at) }} min</span>
+                                    </template>
+                                </ActionItem>
+                            </div>
+                            <div v-else>
+                                <h2>
+                                    Neboli nájdené žiadne výsledky
+                                </h2>
+                            </div>
                         </ul>
                     </div>
                 </div>

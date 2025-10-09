@@ -6,6 +6,9 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 use App\Models\Event;
+use App\Models\EventDetails;
+use App\Models\EventPackages;
+use App\Models\EventOverlays;
 
 class EventSeeder extends Seeder
 {

@@ -10,20 +10,20 @@ import Sidebar from '@/Components/Sidebar.vue';
 </script>
 
 <template>
-    <div class=" bg-overlaybg ">
-        <div class="flex flex-row min-h-screen p-[15px] gap-4">
+    <div class=" flex min-h-screen bg-overlaybg">
+        <div class="flex w-full min-h-screen p-[15px] gap-4">
             <Sidebar />
             
             <!-- Content wrap -->
             <div class="flex flex-col w-full">
                 <!-- Page Heading -->
                 <header class="rounded-md">
-                    <div class="mx-auto sm:px-6 lg:px-8 font-thin">
+                    <div class=" font-thin">
                         <slot name="header" />
                     </div>
                 </header>
                 <!-- Page Content -->
-                <main class="pl-4 pr-4">
+                <main class="">
                     <slot />
                 </main>
             </div>

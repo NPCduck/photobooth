@@ -165,7 +165,7 @@ function selectChild(item, child) {
         </ul>
       </nav>
     </div>
-    <Button
+    <button
       class="inline-flex self-start items-center justify-center bg-sidebarbg-dark rounded-md p-2 ml-4 mb-4 hover:bg-highlight"
       @click="$inertia.post(route('logout'))"
     >

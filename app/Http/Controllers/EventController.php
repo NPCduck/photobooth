@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use App\Models\Event;
 
 class EventController extends Controller
 {
     public function index() {
-        $events = auth()->user()->events()->with(['details', 'packages', 'overlays'])->get();
+        $events = auth()->user()->events()->with(['details', 'packages', 'overlays', 'orders'])->get();
 
         return Inertia::render('Events/Index', [
             'events' => $events,
@@ -17,11 +18,11 @@ class EventController extends Controller
 
     public function show(Event $event) {
         $this->authorize('view', $event);
-        $event->load(['details', 'packages', 'overlays']);
+        $event->load(['details', 'packages', 'overlays', 'orders', 'actions']);
 
         return Inertia::render('Events/Show', [
             'event' => $event
-            ]);
+        ]);
     }
 
     public function create() {
