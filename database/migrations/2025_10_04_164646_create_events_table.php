@@ -28,7 +28,7 @@ return new class extends Migration
             $table->time('time_end')->nullable();
             $table->string('status');
             $table->string('loc_venue');
-            $table->string('loc_address');
+            $table->text('loc_address');
             $table->timestamps();
         });
 
@@ -37,7 +37,8 @@ return new class extends Migration
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->decimal('price', 6, 2);
-            $table->integer('photo_limit')->nullable();
+            $table->integer('photo_limit_total');
+            $table->integer('photo_limit_person')->nullable();
             $table->timestamps();
         });
 

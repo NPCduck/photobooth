@@ -16,17 +16,32 @@ Route::get('/', function () {
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', function () {
         $totalEvents = auth()->user()->events()->count();
-        $totalUpcomingEvents = auth()->user()->events()->whereHas('details', function ($query) {
-            $query->where('status', 'aktuálny');
-        })->count();
-        $upcomingEventsList = auth()->user()->events()->whereHas('details', function ($query) {
-            $query->where('status', 'aktuálny');
-        })->with('details')->take(3)->get();
+
+        $totalUpcomingEvents = auth()->user()->events()
+            ->whereHas('details', function ($query) {
+                $query->where('status', 'aktuálny');
+            })->count();
+
+        $upcomingEventsList = auth()->user()->events()
+            ->join('event_details', 'events.id', '=', 'event_details.event_id')
+            ->where('event_details.status', 'aktuálny')
+            ->orderBy('date')
+            ->select('events.*')
+            ->with('details')
+            ->take(3)
+            ->get();
 
         $totalOrders = auth()->user()->orders()->count();
-        $totalRevenue = auth()->user()->orders()->where('status', 'completed')->sum('amount');
 
-        $latestActions = auth()->user()->actions()->with('event')->latest()->take(5)->get();
+        $totalRevenue = auth()->user()->orders()
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        $latestActions = auth()->user()->actions()
+            ->with('event')
+            ->latest()
+            ->take(5)
+            ->get();
 
         return Inertia::render('Dashboard', [
             'totalEvents' => $totalEvents,

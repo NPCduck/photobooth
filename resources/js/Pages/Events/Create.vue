@@ -74,7 +74,7 @@ let packageId = 1;
 const generatePackage = () => ({
     id : packageId++,
     type : '',
-    cost : null,
+    price : null,
     photoLimitTotal : null,
     photoLimitPerson : null,
 });

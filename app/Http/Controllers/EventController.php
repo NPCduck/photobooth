@@ -33,6 +33,7 @@ class EventController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'details.type' => 'required|string|max:255',
+            'details.hosts' => 'required|integer',
             'details.status' => 'required|string|max:255',
             'details.date' => 'required|date',
             'details.time_start' => 'required|string|max:255',
@@ -42,7 +43,11 @@ class EventController extends Controller
             'details.loc_address' => 'required|string|max:255',
             'packages.*.name' => 'required|string|max:255',
             'packages.*.price' => 'required|numeric|min:0',
-            'packages.*.photo_limit' => 'nullable|integer',
+            'packages.*.photo_limit_total' => 'required|integer|min:0',
+            'packages.*.photo_limit_person' => 'nullable|integer|min:0',
+            'client.name' => 'required|string',
+            'client.email' => 'required|string',
+            'client.phone' => 'required|string|min:10|max:12',
             'overlays.landing_img' => 'nullable|string|max:255',
             'overlays.frame_img' => 'nullable|string|max:255',
         ]);
