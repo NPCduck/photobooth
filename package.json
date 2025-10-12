@@ -21,7 +21,9 @@
         "vue": "^3.4.0"
     },
     "dependencies": {
+        "@vuepic/vue-datepicker": "^11.0.2",
         "lucide-vue-next": "^0.544.0",
+        "vue3-datepicker": "^0.4.0",
         "ziggy-js": "^2.6.0"
     }
 }

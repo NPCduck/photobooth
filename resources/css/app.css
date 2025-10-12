@@ -5,3 +5,13 @@
 html, body, #app {
     height: 100%;
 }
+
+.dp__input {
+    border: none !important;
+    background-color: transparent !important;
+    padding: 0px !important;
+}
+
+.dp__input_icon {
+    display: none !important;
+}

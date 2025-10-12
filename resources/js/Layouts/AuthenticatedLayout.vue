@@ -15,7 +15,7 @@ import Sidebar from '@/Components/Sidebar.vue';
             <Sidebar />
             
             <!-- Content wrap -->
-            <div class="flex flex-col w-full">
+            <div class="flex flex-col w-full gap-4">
                 <!-- Page Heading -->
                 <header class="rounded-md">
                     <div class=" font-thin">

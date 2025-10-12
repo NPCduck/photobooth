@@ -54,7 +54,7 @@ const props = defineProps({
                                         </div>
                                         <div>
                                             <span><b>Obraty:</b></span>
-                                            {{ event.orders.filter(order => order.status === 'completed').reduce((sum, order) => sum + order.amount, 0) }}
+                                            {{ event.orders.filter(order => order.status === 'completed').reduce((sum, order) => sum + order.amount, 0) }} €
                                         </div>
                                         
                                     </div>

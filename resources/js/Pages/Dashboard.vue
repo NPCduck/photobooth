@@ -15,7 +15,6 @@ const props = defineProps({
     upcomingEventsList: Array,
     latestActions: Array
 });
-console.log('TotalUpcomingEvents: ' + props.totalUpcomingEvents);
 
 function minAgo (timestamp) {
     const created = new Date(timestamp);

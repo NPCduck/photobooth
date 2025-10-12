@@ -22,6 +22,7 @@ export default {
                 },
                 overlaybg: {
                     DEFAULT: '#F0EDED',
+                    dark: 'rgba(0, 0, 0, .1)',
                 },
                 highlight: {
                     DEFAULT: '#505050'
