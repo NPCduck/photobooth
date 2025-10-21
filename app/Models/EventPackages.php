@@ -14,7 +14,8 @@ class EventPackages extends Model
         'event_id',
         'name',
         'price',
-        'photo_limit'
+        'photo_limit_total',
+        'photo_limit_person',
     ];
 
     public function event() {

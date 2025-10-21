@@ -10,6 +10,8 @@ class EventClient extends Model
 
     use HasFactory;
 
+    protected $table = 'event_client';
+
     protected $fillable = [
         'event_id',
         'name',

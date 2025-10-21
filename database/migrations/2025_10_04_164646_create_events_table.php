@@ -45,8 +45,8 @@ return new class extends Migration
         Schema::create('event_overlays', function (Blueprint $table) {
             $table->id();
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
-            $table->string('landing_img')->nullable();
-            $table->string('frame_img')->nullable();
+            $table->boolean('landing_img');
+            $table->boolean('frame_img');
             $table->timestamps();
         });
     }

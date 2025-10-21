@@ -21,7 +21,7 @@
         <label :for="id" class="font-semibold">{{ label }}</label>
         <input
             :id="id"
-            :v-model="model"
+            v-model="model"
             :type="type"
             class="border-0 bg-overlaybg rounded-md"
         />

@@ -11,13 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('event_client', function (Blueprint $table) {
-            $table->id();
+        Schema::table('event_client', function (Blueprint $table) {
             $table->foreignId('event_id')->constrained()->onDelete('cascade');
-            $table->string('name');
-            $table->string('email');
-            $table->string('phone');
-            $table->timestamps();
         });
     }
 
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('event_client');
+        Schema::table('event_client', function (Blueprint $table) {
+            //
+        });
     }
 };

@@ -1,12 +1,50 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import EventItem from '@/Components/EventItem.vue'
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { CalendarPlus, Eye, Trash2, Pencil } from 'lucide-vue-next'
+import Swal from 'sweetalert2';
+
 
 const props = defineProps({
     events: Array,
 });
+
+function deleteEvent(id) {
+    Swal.fire({
+        title : 'Naozaj chcete vymazať tento event? Je to nenávratné!',
+        showCancelButton : true,
+        cancelButtonText : 'Zrušiť',
+        confirmButtonText : 'Vymazať event',
+        position: 'center',
+        icon: 'warning',
+    }).then((result) => {
+        if (!result.isConfirmed) {
+            return;
+        }
+        
+        router.delete(route('events.destroy', id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                Swal.fire({
+                    title: 'Event bol úspešne zmazaný!',
+                    icon: 'success',
+                    showCancelButton: true,
+                    cancelButtonText: 'OK',
+                });
+            },
+            onError: (errors) => {
+                Swal.fire({
+                    title: 'Nastala chyba!',
+                    text: JSON.stringify(errors),
+                    icon: 'error',
+                    showCancelButton: true,
+                    cancelButtonText: 'OK',
+                });
+            }
+        });
+    });
+}
 </script>
 
 <template>
@@ -69,19 +107,19 @@ const props = defineProps({
                                         </div>
                                     </Link>
                                     <Link
-                                        :href="route('events.show', event)"
+                                        :href="route('events.update', event)"
                                     >
                                         <div class="hover:bg-itembg rounded-md p-1">
                                             <Pencil />
                                         </div>
                                     </Link>
-                                    <Link
-                                        :href="route('events.show', event)"
+                                    <button
+                                        @click="deleteEvent(event.id)"
                                     >
                                         <div class="hover:bg-itembg rounded-md p-1">
                                             <Trash2 />
                                         </div>
-                                    </Link>
+                                    </button>
                                 </template>
                             </EventItem>
                         </div>

@@ -1,11 +1,15 @@
 <script setup>
-    import { ref, computed, onMounted } from 'vue';
+    import { ref, onMounted } from 'vue';
     import Input from '@/Components/Input.vue';
 
     import { Trash2 } from 'lucide-vue-next';
 
     const props = defineProps({
         model : [Object],
+        errors: {
+            type: Object,
+            default: () => ({})
+        }
     });
 
     const inputRef = ref(null);
@@ -15,25 +19,22 @@
     const emits = defineEmits(['remove']);
     const id = props.model.id;
 
-    onMounted(() => {
-        if(inputRef && checkBoxRef) {
-            checkBoxRef.value.addEventListener('change', (e) => {
-                readonly.value = checkBoxRef.value.checked;
-                inputRef.value.value = 0;
-            });
+    const onCheckboxChange = () => {
+        if(checkBoxRef.value) {
+            props.model.photo_limit_person = 0;
         }
-    });
+    }
 </script>
 
 <template>
     <div class="relative grid grid-cols-4 gap-4 items-start packages mr-8">
-        <Input :id="'packageType-' + id" label="Typ balíčka" :modelValue="model.type" />
-        <Input :id="'packagePrice-' + id" label="Cena balíčka €" :modelValue="model.price" />
-        <Input :id="'packagePhotoLimitTotal' + id" label="Celkový limit fotiek" :modelValue="model.type" />
+        <Input :id="'packageType-' + id" label="Typ balíčka" v-model="model.name" :error="errors.name"/>
+        <Input type="number" :id="'packagePrice-' + id" label="Cena balíčka €" v-model="model.price" :error="errors.price"/>
+        <Input type="number" :id="'packagePhotoLimitTotal' + id" label="Celkový limit fotiek" v-model="model.photo_limit_total" :error="errors.photo_limit_total"/>
         <div class="flex flex-col p-2 gap-2 border border-sidebarbg rounded-md">
             <div class="flex flex-col">
                 <label :for="'packagePhotoLimitPerson-' + id" class="font-semibold">Počet fotiek na osobu</label>
-                <input type="text" :id="'packagePhotoLimitPerson-' + id" :readonly="readonly" :placeholder="readonly ? 0 : ''" v-model="model.photoLimitPerson" ref="inputRef" class="rounded-md border-0 bg-overlaybg">
+                <input type="number" :id="'packagePhotoLimitPerson-' + id" :readonly="readonly" v-model="model.photo_limit_person" ref="inputRef" class="rounded-md border-0 bg-overlaybg">
             </div>
             <div class="flex flex-row items-center gap-2">
                 <input type="checkbox" :id="'packageUnlimitedPhotosPerson-' + id" ref="checkBoxRef" class="bg-overlaybg border-0 rounded-md">
