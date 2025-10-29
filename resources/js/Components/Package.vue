@@ -1,7 +1,6 @@
 <script setup>
-    import { ref, onMounted } from 'vue';
+    import { ref, watch } from 'vue';
     import Input from '@/Components/Input.vue';
-
     import { Trash2 } from 'lucide-vue-next';
 
     const props = defineProps({
@@ -9,21 +8,20 @@
         errors: {
             type: Object,
             default: () => ({})
-        }
+        },
+        isFirst: Boolean,
     });
 
-    const inputRef = ref(null);
-    const checkBoxRef = ref(null);
     const readonly = ref(false);
 
     const emits = defineEmits(['remove']);
     const id = props.model.id;
 
-    const onCheckboxChange = () => {
-        if(checkBoxRef.value) {
+    watch(readonly, (newVal) => {
+        if (newVal) {
             props.model.photo_limit_person = 0;
         }
-    }
+    });
 </script>
 
 <template>
@@ -37,11 +35,11 @@
                 <input type="number" :id="'packagePhotoLimitPerson-' + id" :readonly="readonly" v-model="model.photo_limit_person" ref="inputRef" class="rounded-md border-0 bg-overlaybg">
             </div>
             <div class="flex flex-row items-center gap-2">
-                <input type="checkbox" :id="'packageUnlimitedPhotosPerson-' + id" ref="checkBoxRef" class="bg-overlaybg border-0 rounded-md">
+                <input type="checkbox" :id="'packageUnlimitedPhotosPerson-' + id" v-model="readonly" ref="checkBoxRef" class="bg-overlaybg border-0 rounded-md">
                 <label :for="'packageUnlimitedPhotosPerson-' + id">Neobmedzený počet</label>
             </div>
         </div>
-        <div v-if="id !== 1" class="absolute top-[50%] translate-y-[-50%] right-[-40px] bg-red-600 rounded-md p-1 hover:bg-red-700 flex items-center">
+        <div v-if="!isFirst" class="absolute top-[50%] translate-y-[-50%] right-[-40px] bg-red-600 rounded-md p-1 hover:bg-red-700 flex items-center">
             <button
                 type="button"
                 @click="$emit('remove')"

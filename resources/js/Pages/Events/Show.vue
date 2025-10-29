@@ -4,11 +4,22 @@ import EventItem from '@/Components/EventItem.vue'
 import { Head, Link } from '@inertiajs/vue3';
 import { CalendarPlus, Eye, Trash2, Pencil } from 'lucide-vue-next'
 
-import { toRaw } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
     event: Object,
 })
+
+function getImg(path, filename) {
+    const eventId = props.event.id;
+    const userId = props.event.user_id;
+    return route('private.image', {
+        user_id : userId,
+        event_id : eventId,
+        path : path,
+        file : filename,
+    });
+}
 
 </script>
 
@@ -20,7 +31,7 @@ const props = defineProps({
                     {{ props.event.name }}
                 </h2>
                 <Link
-                    :href="route('events.create')"
+                    :href="route('events.edit', props.event)"
                     class="text-white bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark"
                 >
                     <Pencil />
@@ -30,6 +41,7 @@ const props = defineProps({
         </template>
         <template #default>
             <div class="flex flex-col gap-4 w-full">
+                <!-- Container - Detaily -->
                 <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
                     <p class="font-thin text-[25px]">
                         Detaily
@@ -59,7 +71,7 @@ const props = defineProps({
                                 </div>
                             </div>
                         </div>
-
+                        
                         <div class="bg-white flex flex-col gap-4 p-4 rounded-md">
                             <p class="font-semibold text-xl">Lokácia</p>
                             <div class="flex flex-col gap-2">
@@ -97,6 +109,7 @@ const props = defineProps({
                     </div>
                 </div>
 
+                <!-- Container - Balíčky -->
                 <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
                     <p class="font-thin text-[25px]">
                         Balíčky
@@ -126,6 +139,34 @@ const props = defineProps({
                     </div>
                 </div>
 
+                <!-- Container - Obrázky eventu -->
+                <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
+                    <p class="font-thin text-[25px]">
+                        Obrázky eventu
+                    </p>
+                    <div class="grid grid-cols-2 grid-row gap-4 bg-overlaybg rounded-md p-4">
+                        <div class="bg-white p-4 flex flex-col rounded-md gap-4">
+                            <p class="font-semibold">Obrázok stránky</p>
+                            <div v-if="props.event.overlays.landing_img" class="flex justify-center">
+                                <img :src="getImg('overlays', 'landing_img')" alt="landing_img">
+                            </div>
+                            <div v-else>
+                                <p>Nemáte nahratý súbor</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 flex flex-col rounded-md gap-4">
+                            <p class="font-semibold">Obrázok prekrytia fotky</p>
+                            <div v-if="props.event.overlays.frame_img" class="flex justify-center">
+                                <img :src="getImg('overlays', 'frame_img')" alt="landing_img">
+                            </div>
+                            <div v-else>
+                                <p>Nemáte nahratý súbor</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container - Exportovať dáta -->
                 <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
                     <p class="font-thin text-[25px]">
                         Exportovať dáta

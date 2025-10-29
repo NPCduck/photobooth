@@ -5,6 +5,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\EventController;
+use App\Http\Controllers\ImageController;
+
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
 
 Route::get('/', function () {
     return Inertia::render('Landing', [
@@ -58,6 +62,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('events', EventController::class);
+
+    Route::get('/private-image/user_{user_id}/event_{event_id}/{path}/{file}', [ImageController::class, 'showPrivateImage'])
+        ->where('path', '.*')
+        ->name('private.image');
 });
 
 require __DIR__.'/auth.php';

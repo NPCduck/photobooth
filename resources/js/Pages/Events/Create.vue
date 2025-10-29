@@ -68,7 +68,6 @@ const submit = () => {
             console.log('Successfully sent!');
         },
         onError: (errors) => {
-            console.error('Validation errors:', errors);
         }
     });
 }
@@ -286,7 +285,18 @@ addPackage();
                                     photo_limit_total: form.errors[`packages.${index}.photo_limit_total`],
                                     photo_limit_person: form.errors[`packages.${index}.photo_limit_person`],
                                 }"
-                            /> 
+                            >
+                                <template #remove>
+                                    <div v-if="pckg !== form.packages[0]" class="absolute top-[50%] translate-y-[-50%] right-[-40px] bg-red-600 rounded-md p-1 hover:bg-red-700 flex items-center">
+                                        <button
+                                            type="button"
+                                            @click="$emit('remove')"
+                                        >
+                                            <Trash2 class="text-white translate-y-[-1px]" />
+                                        </button>
+                                    </div>
+                                </template>
+                            </Package> 
                         </div>
                         <span class="ml-auto mr-auto rounded-full border border-sidebarbg p-2 bg-overlaybg cursor-pointer hover:bg-overlaybg-dark"
                             @click="addPackage"

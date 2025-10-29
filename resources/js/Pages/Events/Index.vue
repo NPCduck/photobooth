@@ -107,7 +107,7 @@ function deleteEvent(id) {
                                         </div>
                                     </Link>
                                     <Link
-                                        :href="route('events.update', event)"
+                                        :href="route('events.edit', event)"
                                     >
                                         <div class="hover:bg-itembg rounded-md p-1">
                                             <Pencil />

@@ -51,7 +51,7 @@ class EventController extends Controller
             'packages.*.photo_limit_person' => 'nullable|integer|min:0',
             'client.name' => 'required|string',
             'client.email' => 'required|string',
-            'client.phone' => 'required|string|min:10|max:12',
+            'client.phone' => 'required|string|min:10|max:15',
             'overlays.landing_img' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
             'overlays.frame_img' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
         ]);
@@ -105,7 +105,7 @@ class EventController extends Controller
     public function edit(Event $event) {
         $this->authorize('update', $event);
 
-        $event->load(['details', 'packages', 'overlays']);
+        $event->load(['details', 'packages', 'overlays', 'client']);
 
         return Inertia::render('Events/Edit', [
             'event' => $event,
@@ -132,16 +132,16 @@ class EventController extends Controller
             'packages.*.photo_limit_person' => 'nullable|integer|min:0',
             'client.name' => 'required|string',
             'client.email' => 'required|string',
-            'client.phone' => 'required|string|min:10|max:12',
-            'overlays.landing_img' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
-            'overlays.frame_img' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
+            'client.phone' => 'required|string|min:10|max:15',
+            'overlays.file_landing' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
+            'overlays.file_frame' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
         ]);
 
         $event->update([
             'name' => $data['name'],
         ]);
 
-        $event->client()->create($data['client']);
+        $event->client()->update($data['client']);
 
         $event->details()->update($data['details']);
 
@@ -171,8 +171,8 @@ class EventController extends Controller
             $frame = false;
             $user_id = auth()->id();
 
-            if (!empty($data['overlays']['landing_img'])) {
-                $file = $data['overlays']['landing_img'];
+            if (!empty($data['overlays']['file_landing'])) {
+                $file = $data['overlays']['file_landing'];
 
                 $path = $file->storeAs(
                     'user_' . $user_id . '/event_' . $event->id . '/overlays',
@@ -181,8 +181,8 @@ class EventController extends Controller
                 $landing = true;
             }
 
-            if (!empty($data['overlays']['frame_img'])) {
-                $file = $data['overlays']['frame_img'];
+            if (!empty($data['overlays']['file_frame'])) {
+                $file = $data['overlays']['file_frame'];
 
                 $path = $file->storeAs(
                     'user_' . $user_id . '/event_' . $event->id . '/overlays',
@@ -191,13 +191,15 @@ class EventController extends Controller
                 $frame = true;
             }
 
-            $event->overlays()->create([
-                'landing_img' => $landing,
-                'frame_img' => $frame,
-            ]);
+            $event->overlays()->updateOrCreate([
+                'event_id' => $event->id,
+                ],
+                [
+                    'landing_img' => $landing,
+                    'frame_img' => $frame,
+                ]
+            );
         }
-
-        $event->overlays()->updateOrCreate([], $data['overlays']);
 
         return redirect()->route('events.show', $event);
     }
