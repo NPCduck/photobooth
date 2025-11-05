@@ -1,10 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import EventItem from '@/Components/EventItem.vue'
-import { Head, Link } from '@inertiajs/vue3';
-import { CalendarPlus, Eye, Trash2, Pencil } from 'lucide-vue-next'
-
-import { computed } from 'vue';
+import { Link } from '@inertiajs/vue3';
+import { Pencil } from 'lucide-vue-next'
 
 const props = defineProps({
     event: Object,
@@ -162,6 +159,18 @@ function getImg(path, filename) {
                             <div v-else>
                                 <p>Nemáte nahratý súbor</p>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Container - QR kód -->
+                <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
+                    <p class="font-thin text-[25px]">
+                        QR kód
+                    </p>
+                    <div class="flex flex-col gap-4 bg-overlaybg rounded-md p-4">
+                        <div class="bg-white ">
+                            
                         </div>
                     </div>
                 </div>

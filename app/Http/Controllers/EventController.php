@@ -191,13 +191,13 @@ class EventController extends Controller
                 $frame = true;
             }
 
-            $event->overlays()->updateOrCreate([
-                'event_id' => $event->id,
-                ],
-                [
-                    'landing_img' => $landing,
-                    'frame_img' => $frame,
-                ]
+            $overlay_data = [];
+            $overlay_data += $landing ? ['landing_img' => $landing] : [];
+            $overlay_data += $frame   ? ['frame_img'   => $frame]   : [];
+
+            $event->overlays()->updateOrCreate(
+                ['event_id' => $event->id,],
+                $overlay_data
             );
         }
 

@@ -285,10 +285,7 @@ const testInputs = async () => {
                                     placeholder="Vyberte dátum"
                                     class="rounded-md border-0 bg-overlaybg w-full"
                                     :min-date="minDate"
-
-                                    
                                 />
-
                             </div>
                             <div class="flex flex-col p-2 border border-sidebarbg rounded-md">
                                 <label for="time_start" class="font-semibold">Čas - začiatok</label>

@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Support\Facades\Storage;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Str;
 
 class Event extends Model
 {
@@ -14,6 +17,26 @@ class Event extends Model
         'user_id',
         'name'
     ];
+
+    protected static function booted() {
+        static::creating(function ($event) {
+            if (empty($event->public_token)) {
+                $event->public_token = Str::uuid();
+            }
+        });
+
+        static::created(function ($event) {
+            $url = route('events.show', $event->id);
+            $qr = QrCode::format('png')
+                ->size(300)
+                ->errorCorrection('H')
+                ->style('square')
+                ->eye('circle')
+                ->generate($url, null, 'gd');
+
+            Storage::disk('private')->put('user_' . $event->user_id . '/event_' . $event->id . '/qr.png', $qr);
+        });
+    }
 
     protected $with = ['details', 'packages', 'overlays'];
 

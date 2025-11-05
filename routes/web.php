@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\PhotoController;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
@@ -16,6 +17,8 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
     ]);
 })->name('landing');
+
+Route::get('/photoshoot/{token}', [PhotoController::class, 'capture'])->name('photoshooot.capture');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', function () {
