@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, router } from '@inertiajs/vue3';
 import { Pencil } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -10,12 +10,35 @@ const props = defineProps({
 function getImg(path, filename) {
     const eventId = props.event.id;
     const userId = props.event.user_id;
-    return route('private.image', {
-        user_id : userId,
-        event_id : eventId,
-        path : path,
-        file : filename,
-    });
+
+    const params = {
+        user_id: userId,
+        event_id: eventId,
+        file: filename,
+    };
+    if (path) {
+        params.path = path;
+    }
+    return route('private.image', params);
+}
+
+function getQr(filename) {
+    const eventId = props.event.id;
+    const userId = props.event.user_id;
+
+    const params = {
+        user_id: userId,
+        event_id: eventId,
+        file: filename,
+    };
+    return route('private.qrcode', params);
+}
+
+function activateQr() {
+    router.post(route('events.qr.activate', props.event.id));
+}
+function deactivateQr() {
+    router.post(route('events.qr.deactivate', props.event.id));
 }
 
 </script>
@@ -169,8 +192,25 @@ function getImg(path, filename) {
                         QR kód
                     </p>
                     <div class="flex flex-col gap-4 bg-overlaybg rounded-md p-4">
-                        <div class="bg-white ">
-                            
+                        <div class="bg-white flex flex-col items-center p-4 rounded-md gap-4">
+                            <div v-if="props.event.qr_active" class="flex flex-col justify-center">
+                                <img :src="getQr('qr')" alt="qr_code">
+                                <button
+                                    @click="deactivateQr()"
+                                    class="p-4 bg-red-600 text-white rounded-md hover:bg-red-700 mt-4">
+                                    Deaktivovať QR kód
+                                </button>
+                            </div>
+                            <div v-else class="p-4 ">
+                                <p class="font-semibold ">
+                                    QR kód nie je aktívny
+                                </p>
+                                <button
+                                    @click="activateQr()"
+                                    class="p-4 bg-sidebarbg text-white rounded-md hover:bg-sidebarbg-dark mt-4">
+                                    Aktivovať QR kód
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

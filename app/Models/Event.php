@@ -5,8 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Storage;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Str;
+
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class Event extends Model
 {
@@ -26,15 +27,15 @@ class Event extends Model
         });
 
         static::created(function ($event) {
-            $url = route('events.show', $event->id);
-            $qr = QrCode::format('png')
+            $url = route('capture.show', $event->public_token);
+            
+            $qrSvg = QrCode::format('svg')
                 ->size(300)
                 ->errorCorrection('H')
-                ->style('square')
-                ->eye('circle')
-                ->generate($url, null, 'gd');
+                ->generate($url);
 
-            Storage::disk('private')->put('user_' . $event->user_id . '/event_' . $event->id . '/qr.png', $qr);
+            Storage::disk('private')
+                ->put('user_' . $event->user_id . '/event_' . $event->id . '/qr.svg', $qrSvg);
         });
     }
 

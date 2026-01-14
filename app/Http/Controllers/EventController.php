@@ -210,10 +210,10 @@ class EventController extends Controller
         $rmf_status = true;
 
         $user_id = auth()->id();
-        $overlays_path = 'user_' . $user_id . '/event_' . $event->id . '/overlays';
+        $event_path = 'user_' . $user_id . '/event_' . $event->id;
 
-        if (Storage::disk('private')->exists($overlays_path)) {
-            if (!Storage::disk('private')->deleteDirectory($overlays_path)) {
+        if (Storage::disk('private')->exists($event_path)) {
+            if (!Storage::disk('private')->deleteDirectory($event_path)) {
                 $rmf_status = false;
             }
         }
