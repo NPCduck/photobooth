@@ -23,9 +23,11 @@ class EventController extends Controller
     public function show(Event $event) {
         $this->authorize('view', $event);
         $event->load(['details', 'packages', 'overlays', 'orders', 'actions', 'client']);
+        $qrurl = route('capture.show', $event->public_token);
 
         return Inertia::render('Events/Show', [
-            'event' => $event
+            'event' => $event,
+            'qrurl' => $qrurl,
         ]);
     }
 

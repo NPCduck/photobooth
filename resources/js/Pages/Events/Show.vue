@@ -1,10 +1,11 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
-import { Pencil } from 'lucide-vue-next'
+import { Pencil } from 'lucide-vue-next';
 
 const props = defineProps({
     event: Object,
+    qrurl: String,
 })
 
 function getImg(path, filename) {
@@ -194,7 +195,8 @@ function deactivateQr() {
                     <div class="flex flex-col gap-4 bg-overlaybg rounded-md p-4">
                         <div class="bg-white flex flex-col items-center p-4 rounded-md gap-4">
                             <div v-if="props.event.qr_active" class="flex flex-col justify-center">
-                                <img :src="getQr('qr')" alt="qr_code">
+                                <img :src="getQr('qr')" alt="qr_code" class="max-h-[250px] object-contain mb-2">
+                                <a :href="qrurl" class="text-sidebarbg hover:underline">{{ qrurl }}</a>
                                 <button
                                     @click="deactivateQr()"
                                     class="p-4 bg-red-600 text-white rounded-md hover:bg-red-700 mt-4">

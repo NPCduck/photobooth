@@ -27,8 +27,12 @@ Route::get('/private-image/user_{user_id}/event_{event_id}/{file}', [ImageContro
     ->where('path', '.*')
     ->name('private.qrcode');
 
+
 Route::get('/capture/{token}', [PhotoController::class, 'show'])->name('capture.show');
+Route::post('/capture/{token}/check-email', [PhotoController::class, 'checkEmail'])->name('capture.checkEmail');
 Route::post('/capture/{token}/upload', [PhotoController::class, 'upload'])->name('capture.upload');
+Route::post('/capture/{token}/create-guest', [PhotoController::class, 'createGuest'])->name('capture.createGuest');
+
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/dashboard', function () {
