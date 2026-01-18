@@ -231,4 +231,14 @@ class EventController extends Controller
 
         return redirect()->route('events.index');
     }
+
+    public function photos(Event $event) {
+        $this->authorize('view', $event);
+
+        $event->load('photos.guest');
+
+        return Inertia::render('Events/Photos', [
+            'event' => $event,
+        ]);
+    }
 }

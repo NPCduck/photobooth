@@ -1,23 +1,29 @@
 <script setup>
     import { ref, onMounted } from 'vue';
-    import { router } from '@inertiajs/vue3';
 
     const props = defineProps({ event: Object });
 
-    const step = ref('email'); // krok: 'email' | 'package' | 'capture'
+    /* ====== STATE ====== */
+    const step = ref('email'); // email | package | capture
     const email = ref('');
     const packages = ref([]);
     const selectedPackage = ref(null);
     const guestId = ref(null);
+
     const errorMessage = ref('');
     const uploadMessage = ref('');
+    const uploading = ref(false);
 
-    const imageFile = ref(null);
-    const previewUrl = ref(null);
-    const finalImageUrl = ref(null);
+    /* ====== IMAGE STATE ====== */
+    const imageFile = ref(null);        // vybraný súbor
+    const finalImageUrl = ref(null);    // odfotená / vybraná fotka (DATA URL)
+    const landingImageUrl = ref(null);  // LEN na zobrazenie
+
+    /* ====== CAMERA ====== */
     const cameraStream = ref(null);
     const videoRef = ref(null);
 
+    /* ====== EMAIL CHECK ====== */
     async function checkEmail() {
         errorMessage.value = '';
 
@@ -31,9 +37,7 @@
                         .querySelector('meta[name="csrf-token"]')
                         .getAttribute('content'),
                 },
-                body: JSON.stringify({
-                    email: email.value,
-                }),
+                body: JSON.stringify({ email: email.value }),
             }
         );
 
@@ -59,9 +63,10 @@
         errorMessage.value = data.message;
     }
 
+    /* ====== CREATE GUEST ====== */
     async function confirmPackage() {
         if (!selectedPackage.value) {
-            alert('Vyberte balíček!');
+            alert('Vyberte balíček.');
             return;
         }
 
@@ -93,21 +98,29 @@
         step.value = 'capture';
     }
 
+    /* ====== FILE SELECT ====== */
     function onFileChange(e) {
         const file = e.target.files[0];
-        if (file) {
-            imageFile.value = file;
-            previewUrl.value = URL.createObjectURL(file);
-            finalImageUrl.value = previewUrl.value;
-        }
+        if (!file) return;
+
+        imageFile.value = file;
+        finalImageUrl.value = URL.createObjectURL(file);
     }
 
+    /* ====== CAMERA ====== */
     async function startCamera() {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
-        
+        if (!navigator.mediaDevices?.getUserMedia) return;
+
         cameraStream.value = await navigator.mediaDevices.getUserMedia({ video: true });
         videoRef.value.srcObject = cameraStream.value;
         videoRef.value.play();
+    }
+
+    function stopCamera() {
+        if (!cameraStream.value) return;
+
+        cameraStream.value.getTracks().forEach(track => track.stop());
+        cameraStream.value = null;
     }
 
     function takePhoto() {
@@ -116,8 +129,8 @@
         const canvas = document.createElement('canvas');
         canvas.width = videoRef.value.videoWidth;
         canvas.height = videoRef.value.videoHeight;
-        const ctx = canvas.getContext('2d');
 
+        const ctx = canvas.getContext('2d');
         ctx.drawImage(videoRef.value, 0, 0);
 
         const overlay = new Image();
@@ -132,62 +145,67 @@
             ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
             finalImageUrl.value = canvas.toDataURL('image/jpeg');
             stopCamera();
-        }
+        };
     }
 
-    function stopCamera() {
-        if (cameraStream.value) {
-            cameraStream.value.getTracks().forEach(track => track.stop());
-            cameraStream.value = null;
-        }
-    }
-
+    /* ====== UPLOAD ====== */
     async function uploadPhoto() {
+        if (uploading.value) return;
         if (!guestId.value) return alert('Hosť nebol určený.');
 
-        const file = imageFile.value;
-        if (!file && !finalImageUrl.value)
-            return alert('Vyberte alebo odfoťte fotku pred nahraním.');
-
-        const formData = new FormData();
-        formData.append('guest_id', guestId.value);
-
-        if (file) {
-            formData.append('photo', file);
-        } else {
-            const blob = await (await fetch(finalImageUrl.value)).blob();
-            formData.append('photo', blob, 'photo.jpg');
-        }
-
-        const response = await fetch(
-            route('capture.upload', props.event.public_token),
-            {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document
-                        .querySelector('meta[name="csrf-token"]')
-                        .getAttribute('content'),
-                },
-                body: formData,
-            }
-        );
-
-        if (!response.ok) {
-            const text = await response.text(); // ⚠️ dôležité pri erroroch
-            console.error(text);
-            uploadMessage.value = 'Nahrávanie fotky sa nepodarilo.';
+        if (!imageFile.value && !finalImageUrl.value) {
+            alert('Najskôr odfoť alebo vyber fotku.');
             return;
         }
 
-        const data = await response.json();
-        uploadMessage.value = 'Fotka bola úspešne nahraná.';
-        imageFile.value = null;
-        finalImageUrl.value = null;
+        uploading.value = true;
+        uploadMessage.value = '';
+
+        try {
+            const formData = new FormData();
+            formData.append('guest_id', guestId.value);
+
+            if (imageFile.value) {
+                formData.append('photo', imageFile.value);
+            } else {
+                const blob = await (await fetch(finalImageUrl.value)).blob();
+                formData.append('photo', blob, 'photo.jpg');
+            }
+
+            const response = await fetch(
+                route('capture.upload', props.event.public_token),
+                {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document
+                            .querySelector('meta[name="csrf-token"]')
+                            .getAttribute('content'),
+                    },
+                    body: formData,
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                uploadMessage.value = data.message || 'Nahrávanie zlyhalo.';
+                return;
+            }
+
+            // úspech → redirect
+            window.location.href = data.redirect;
+
+        } catch (e) {
+            console.error(e);
+            uploadMessage.value = 'Nahrávanie zlyhalo.';
+        } finally {
+            uploading.value = false;
+        }
     }
 
+    /* ====== INIT ====== */
     onMounted(() => {
-        // landing image (pred fotením)
-        finalImageUrl.value = route('private.image', {
+        landingImageUrl.value = route('private.image', {
             user_id: props.event.user_id,
             event_id: props.event.id,
             path: 'overlays',
@@ -195,6 +213,7 @@
         });
     });
 </script>
+
 
 
 <template>
@@ -217,7 +236,8 @@
 
         <!-- Krok 3: Fotenie/nahrávanie fotiek -->
         <div v-if="step === 'capture'">
-            <div>
+            <div class="flex flex-col items-center">
+                <img v-if="landingImageUrl" :src="landingImageUrl" alt="Landing Image" class="flex mx-auto justify-center mb-4">
                 <input type="file" accept="image/*" @change="onFileChange">
                 <button @click="startCamera">Spustiť kameru</button>
                 <div v-if="cameraStream">

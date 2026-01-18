@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import EventItem from '@/Components/EventItem.vue'
 import { Head, Link, router } from '@inertiajs/vue3';
-import { CalendarPlus, Eye, Trash2, Pencil } from 'lucide-vue-next'
+import { CalendarPlus, Eye, Trash2, Pencil, Images } from 'lucide-vue-next'
 import Swal from 'sweetalert2';
 
 
@@ -104,6 +104,13 @@ function deleteEvent(id) {
                                     >
                                         <div class="hover:bg-itembg rounded-md p-1">
                                             <Eye />
+                                        </div>
+                                    </Link>
+                                    <Link
+                                        :href="route('events.photos', event)"
+                                    >
+                                        <div class="hover:bg-itembg rounded-md p-1">
+                                            <Images />
                                         </div>
                                     </Link>
                                     <Link

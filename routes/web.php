@@ -8,6 +8,7 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\PhotoController;
 use App\Http\Controllers\QrController;
+use Illuminate\Support\Facades\Redirect;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
@@ -27,11 +28,13 @@ Route::get('/private-image/user_{user_id}/event_{event_id}/{file}', [ImageContro
     ->where('path', '.*')
     ->name('private.qrcode');
 
-
 Route::get('/capture/{token}', [PhotoController::class, 'show'])->name('capture.show');
 Route::post('/capture/{token}/check-email', [PhotoController::class, 'checkEmail'])->name('capture.checkEmail');
 Route::post('/capture/{token}/upload', [PhotoController::class, 'upload'])->name('capture.upload');
 Route::post('/capture/{token}/create-guest', [PhotoController::class, 'createGuest'])->name('capture.createGuest');
+Route::get('/capture/{token}/thank-you',
+    fn ($token) => Inertia::render('Photo/ThankYou', ['token' => $token]))
+    ->name('capture.thankYou');
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -82,6 +85,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::resource('events', EventController::class);
+    Route::get('/events/{event}/photos', [EventController::class, 'photos'])->name('events.photos');
+    
+    Route::get('private/image/{path}', [PhotoController::class, 'getPhotoUrl'])
+        ->where('path', '.*')
+        ->name('private.getPhotoUrl');
 });
 
 require __DIR__.'/auth.php';

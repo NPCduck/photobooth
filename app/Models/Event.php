@@ -68,4 +68,12 @@ class Event extends Model
     public function client() {
         return $this->hasOne(EventClient::class);
     }
+
+    public function guests() {
+        return $this->hasMany(EventGuest::class);
+    }
+
+    public function photos() {
+        return $this->hasMany(EventPhoto::class);
+    }
 }

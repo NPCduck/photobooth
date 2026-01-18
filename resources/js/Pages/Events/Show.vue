@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
-import { Pencil } from 'lucide-vue-next';
+import { Pencil, Images } from 'lucide-vue-next';
 
 const props = defineProps({
     event: Object,
@@ -51,13 +51,22 @@ function deactivateQr() {
                 <h2 class="text-3xl font-normal leading-tight text-gray-800">
                     {{ props.event.name }}
                 </h2>
-                <Link
-                    :href="route('events.edit', props.event)"
-                    class="text-white bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark"
-                >
-                    <Pencil />
-                    <span>Upraviť event</span>
-                </Link>
+                <div class="flex flex-row gap-4">
+                    <Link
+                        :href="route('events.photos', props.event)"
+                        class="text-white bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark"
+                    >
+                        <Images />
+                        <span>Zobraziť fotky</span>
+                    </Link>
+                    <Link
+                        :href="route('events.edit', props.event)"
+                        class="text-white bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark"
+                    >
+                        <Pencil />
+                        <span>Upraviť event</span>
+                    </Link>
+                </div>
             </div>
         </template>
         <template #default>
