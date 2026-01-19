@@ -19,6 +19,8 @@ class Event extends Model
         'name'
     ];
 
+    protected $with = ['details', 'packages', 'overlays'];
+
     protected static function booted() {
         static::creating(function ($event) {
             if (empty($event->public_token)) {
@@ -39,7 +41,39 @@ class Event extends Model
         });
     }
 
-    protected $with = ['details', 'packages', 'overlays'];
+    public function scopeSearch($query, $search) {
+        if (!$search) {
+            return $query;
+        }
+
+        return $query->where('name', 'like', '%' . $search . '%');
+    }
+
+    public function scopeStatus($query, $status) {
+        if (!$status) {
+            return $query;
+        }
+
+        return $query->whereHas('details', function ($q) use ($status) {
+            $q->where('status', $status);
+        });
+    }
+
+    public function scopeSortBy($query, $sort) {
+        return match ($sort) {
+            'name_asc'  => $query->orderBy('name', 'asc'),
+            'name_desc' => $query->orderBy('name', 'desc'),
+            'date_asc'  => $query->orderBy(
+                EventDetails::select('date')
+                    ->whereColumn('event_details.event_id', 'events.id')
+            ),
+            'date_desc' => $query->orderByDesc(
+                EventDetails::select('date')
+                    ->whereColumn('event_details.event_id', 'events.id')
+            ),
+            default => $query->latest(),
+        };
+    }
 
     public function details() {
         return $this->hasOne(EventDetails::class);

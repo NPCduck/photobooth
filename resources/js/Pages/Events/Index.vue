@@ -1,51 +1,62 @@
 <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import EventItem from '@/Components/EventItem.vue'
-import { Head, Link, router } from '@inertiajs/vue3';
-import { CalendarPlus, Eye, Trash2, Pencil, Images } from 'lucide-vue-next'
-import Swal from 'sweetalert2';
+    import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+    import EventItem from '@/Components/EventItem.vue'
+    import { Link, router } from '@inertiajs/vue3';
+    import { CalendarPlus, Eye, Trash2, Pencil, Images, X } from 'lucide-vue-next'
+    import Swal from 'sweetalert2';
+    import { ref, watch } from 'vue';
 
-
-const props = defineProps({
-    events: Array,
-});
-
-function deleteEvent(id) {
-    Swal.fire({
-        title : 'Naozaj chcete vymazať tento event? Je to nenávratné!',
-        showCancelButton : true,
-        cancelButtonText : 'Zrušiť',
-        confirmButtonText : 'Vymazať event',
-        position: 'center',
-        icon: 'warning',
-    }).then((result) => {
-        if (!result.isConfirmed) {
-            return;
-        }
-        
-        router.delete(route('events.destroy', id), {
-            preserveScroll: true,
-            onSuccess: () => {
-                Swal.fire({
-                    title: 'Event bol úspešne zmazaný!',
-                    icon: 'success',
-                    showCancelButton: true,
-                    cancelButtonText: 'OK',
-                });
-            },
-            onError: (errors) => {
-                Swal.fire({
-                    title: 'Nastala chyba!',
-                    text: JSON.stringify(errors),
-                    icon: 'error',
-                    showCancelButton: true,
-                    cancelButtonText: 'OK',
-                });
-            }
-        });
+    const props = defineProps({
+        events: Array,
+        filters: {
+            type: Object,
+            default: () => ({}),
+        },
     });
-}
+
+    const search = ref(props.filters.search ?? '');
+    const status = ref(props.filters.status ?? '');
+    const sort   = ref(props.filters.sort   ?? '');
+
+
+    let timeout = null;
+
+    watch([search, status, sort], () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => {
+            router.get(route('events.index'), {
+                search: search.value,
+                status: status.value,
+                sort: sort.value,
+            }, {
+                preserveState: true,
+                replace: true,
+            });
+        }, 300);
+    });
+
+    function clearFilters() {
+        search.value = '';
+        status.value = '';
+        sort.value = '';
+    }
+
+    function deleteEvent(id) {
+        Swal.fire({
+            title : 'Naozaj chcete vymazať tento event?',
+            showCancelButton : true,
+            confirmButtonText : 'Vymazať',
+            icon: 'warning',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            router.delete(route('events.destroy', id), {
+                preserveScroll: true,
+            });
+        });
+    }
 </script>
+
 
 <template>
     <AuthenticatedLayout>
@@ -66,9 +77,54 @@ function deleteEvent(id) {
         <template #default>
             <div>
                 <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
-                    <p class="font-thin text-[25px]">
+                    <div class="flex flex-row justify-between items-center">
+                        <p class="font-thin text-[25px]">
                         Zoznam eventov
-                    </p>
+                        </p>
+                        <!-- Search -->
+                        <div class="flex flex-col gap-4 md:flex-row">
+                            <div class="flex flex-col">
+                                <label class="text-sm text-gray-600">Vyhľadávanie</label>
+                                <input
+                                    v-model="search"
+                                    type="text"
+                                    placeholder="Názov eventu..."
+                                    class="border rounded-md px-3 py-2"
+                                />
+                            </div>
+
+                            <!-- Status -->
+                            <div class="flex flex-col">
+                                <label class="text-sm text-gray-600">Stav</label>
+                                <select v-model="status" class="border rounded-md px-3 py-2">
+                                    <option value="">Všetky</option>
+                                    <option value="aktuálny">Aktuálny</option>
+                                    <option value="ukončený">Ukončený</option>
+                                </select>
+                            </div>
+
+                            <!-- Sort -->
+                            <div class="flex flex-col">
+                                <label class="text-sm text-gray-600">Zoradenie</label>
+                                <select v-model="sort" class="border rounded-md pr-8 px-3 py-2">
+                                    <option value="">Najnovšie</option>
+                                    <option value="name_asc">Názov ↑</option>
+                                    <option value="name_desc">Názov ↓</option>
+                                    <option value="date_asc">Dátum ↑</option>
+                                    <option value="date_desc">Dátum ↓</option>
+                                </select>
+                            </div>
+
+                            <!-- Clear -->
+                            <button
+                                v-if="search || status || sort"
+                                @click="clearFilters"
+                                class="text-sm text-red-600 flex items-center gap-1 mt-2 md:mt-0"
+                            >
+                                <X size="16" /> Zrušiť filtre
+                            </button>
+                        </div>
+                    </div>
                     <ul>
                         <div v-if="events.length" class="flex flex-col gap-4">
                             <EventItem

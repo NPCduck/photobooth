@@ -12,11 +12,18 @@ class EventController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index() {
-        $events = auth()->user()->events()->with(['details', 'packages', 'overlays', 'orders'])->get();
+    public function index(Request $request) {
+        $events = auth()->user()
+            ->events()
+            ->with(['details', 'packages', 'overlays', 'orders'])
+            ->search($request->search)
+            ->status($request->status)
+            ->sortBy($request->sort)
+            ->get();
 
         return Inertia::render('Events/Index', [
             'events' => $events,
+            'filters' => $request->only(['search', 'status', 'sort']),
         ]);
     }
 
