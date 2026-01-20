@@ -151,7 +151,7 @@ addPackage();
                 <h2 class="text-3xl font-normal leading-tight text-gray-800">
                     Vytvoriť event
                 </h2>
-                <div class="flex flex-row gap-4">
+                <div class="flex hidden md:flex flex-row gap-4">
                     <Link
                         @click="submit"
                         class="text-white bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark"
@@ -171,9 +171,22 @@ addPackage();
             </div>
         </template>
         <template #default>
-            <button type="button" @click="testInputs" class="absolute top-2 left-[700px] p-4 bg-green-400 rounded-md">
-                Test inputov
-            </button>
+            <div class="flex flex-row gap-4 md:hidden justify-end pb-4">
+                <Link
+                    @click="submit"
+                    class="text-white bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark"
+                >
+                    <Save />
+                    <span>Uložiť</span>
+                </Link>
+                <Link
+                    :href="route('events.index')"
+                    class="text-white bg-red-600 rounded-md flex flex-row p-2 gap-2 hover:bg-red-700"
+                >
+                    <Trash2 />
+                    <span>Zahodiť</span>
+                </Link>
+            </div>
             <form @submit.prevent="submit">
                 <div class="flex flex-col gap-4 w-full">
                     <!-- Basic info -->
@@ -181,7 +194,7 @@ addPackage();
                         <p class="font-thin text-[25px]">
                             Základné informácie
                         </p>
-                        <div class="grid grid-cols-4 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <Input id="name" label="Názov eventu" v-model="form.name" :error="form.errors['name']" />
                             <Input id="type" label="Typ eventu" v-model="form.details.type" :error="form.errors['details.type']" />
                             <div class="flex flex-col p-2 border border-sidebarbg rounded-md">
@@ -261,7 +274,7 @@ addPackage();
                         <p class="font-thin text-[25px]">
                             Lokácia a detaily
                         </p>
-                        <div class="grid grid-cols-2 gap-4 items-start">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                             <Input id="loc_venue" label="Miesto konania" v-model="form.details.loc_venue" :error="form.errors['details.loc_venue']" />
                             <div class="flex flex-col p-2 border border-sidebarbg rounded-md">
                                 <label for="status" class="font-semibold">Celá adresa</label>
@@ -308,7 +321,7 @@ addPackage();
                         <p class="font-thin text-[25px]">
                             Informácie o klientovi
                         </p>
-                        <div class="grid grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <Input id="clientName" label="Meno klienta" v-model="form.client.name" :error="form.errors['client.name']" />
                             <Input id="clientEmail" label="Email klienta" v-model="form.client.email" :error="form.errors['client.email']" />
                             <Input id="clientPhone" label="Tel. č. klienta" v-model="form.client.phone" :error="form.errors['client.phone']" />
@@ -318,7 +331,7 @@ addPackage();
                         <p class="font-thin text-[25px]">
                             Dodatočné nastavenia
                         </p>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="flex flex-col p-2 border border-sidebarbg rounded-md">
                                 <label for="landingImg" class="font-semibold">Obrázok hlavnej stránky</label>
                                 <input type="file" @change="e => handleFileUpload(e, 'landing_img')" />

@@ -60,15 +60,6 @@ return new class extends Migration
             $table->string('phone');
             $table->timestamps();
         });
-
-        Schema::create('actions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('event_id')->constrained()->onDelete('cascade');
-            $table->string('action_type');
-            $table->text('description')->nullable();
-            $table->timestamps();
-        });
     }
 
     /**
@@ -76,7 +67,6 @@ return new class extends Migration
      */
     public function down(): void
     {   
-        Schema::dropIfExists('actions');
         Schema::dropIfExists('event_client');
         Schema::dropIfExists('event_overlays');
         Schema::dropIfExists('event_packages');

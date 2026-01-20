@@ -27,131 +27,119 @@ function minAgo (timestamp) {
 
 <template>
     <AuthenticatedLayout>
+
+        <!-- HEADER -->
         <template #header>
-            <h2 class="text-3xl mb-4 font-normal leading-tight text-gray-800">
+            <h2 class="text-2xl md:text-3xl mb-4 font-normal text-gray-800">
                 Nástenka
             </h2>
         </template>
+
         <template #default>
-            <div class="flex flex-col gap-4 w-full">
-                <!-- Basic stats -->
-                <div class="flex justify-between flex-row gap-4">
+            <div class="flex flex-col gap-6 w-full">
+
+                <!-- STATS -->
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <DisplayStats>
-                        <template #icon>
-                            <CalendarCheck />
-                        </template>
-                        <template #value>
-                            {{ totalEvents }}
-                        </template>
+                        <template #icon><CalendarCheck /></template>
+                        <template #value>{{ totalEvents }}</template>
                         Počet eventov
                     </DisplayStats>
+
                     <DisplayStats>
-                        <template #icon>
-                            <CalendarClock />
-                        </template>
-                        <template #value>
-                            {{ totalUpcomingEvents }}
-                        </template>
+                        <template #icon><CalendarClock /></template>
+                        <template #value>{{ totalUpcomingEvents }}</template>
                         Aktuálne eventy
                     </DisplayStats>
+
                     <DisplayStats>
-                        <template #icon>
-                            <ShoppingBasket />
-                        </template>
-                        <template #value>
-                            {{ totalOrders }}
-                        </template>
+                        <template #icon><ShoppingBasket /></template>
+                        <template #value>{{ totalOrders }}</template>
                         Celkové objednávky
                     </DisplayStats>
+
                     <DisplayStats>
-                        <template #icon>
-                            <DollarSign />
-                        </template>
-                        <template #value>
-                            {{ totalRevenue }} €
-                        </template>
+                        <template #icon><DollarSign /></template>
+                        <template #value>{{ totalRevenue }} €</template>
                         Celkové obraty
                     </DisplayStats>
                 </div>
 
-                <!-- Upcoming events -->
-                <div>
-                    <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
-                        <p class="font-thin text-[25px]">
-                            Naplánované eventy
-                        </p>
-                        <ul>
-                            <div v-if="upcomingEventsList.length" class="flex flex-col gap-4">
-                                <EventItem
-                                    v-for="event in upcomingEventsList"
-                                    :key="event.name"
-                                    class="rounded-md align-center flex"
-                                >
-                                    <template #name>
-                                        <span class="text-xl">{{ event.name }}</span>
-                                    </template>
+                <!-- UPCOMING EVENTS -->
+                <div class="bg-white p-4 md:p-6 shadow rounded-md">
+                    <p class="font-thin text-xl md:text-2xl mb-4">
+                        Naplánované eventy
+                    </p>
 
-                                    <template #attributes>
-                                        <div>
-                                            <span><b>Lokácia:</b></span>
-                                            {{ event.details.loc_venue }}
-                                            <span><b>Dátum:</b></span>
-                                            {{ event.details.date }}
-                                        </div>
-                                    </template>
-                                    
-                                    <template #buttons>
-                                        <Link
-                                            :href="route('events.show', event)"
-                                        >
-                                            <div class="hover:bg-itembg rounded-md p-1">
-                                                <Eye />
-                                            </div>
-                                        </Link>
-                                    </template>
-                                </EventItem>
-                            </div>
-                            
-                            <div v-else>
-                                <h2 class="text-[20px]">
-                                    Neboli nájdené žiadne výsledky
-                                </h2>
-                            </div>
-                        </ul>
+                    <div v-if="upcomingEventsList.length" class="flex flex-col gap-4">
+                        <EventItem
+                            v-for="event in upcomingEventsList"
+                            :key="event.id"
+                            class="flex flex-row rounded justify-between items-center gap-3 md:flex-row md:items-center"
+                        >
+                            <template #name>
+                                <span class="text-lg md:text-xl break-words">
+                                    {{ event.name }}
+                                </span>
+                            </template>
+
+                            <template #attributes>
+                                <div class="text-sm md:text-base">
+                                    <span class="font-semibold">Lokácia:</span>
+                                    {{ event.details.loc_venue }}
+                                    <br class="md:hidden" />
+                                    <span class="font-semibold md:ml-2">Dátum:</span>
+                                    {{ event.details.date }}
+                                </div>
+                            </template>
+
+                            <template #buttons>
+                                <Link :href="route('events.show', event)">
+                                    <div class="hover:bg-itembg rounded-md p-2">
+                                        <Eye />
+                                    </div>
+                                </Link>
+                            </template>
+                        </EventItem>
+                    </div>
+
+                    <div v-else>
+                        <p class="text-lg">Neboli nájdené žiadne výsledky</p>
                     </div>
                 </div>
 
-                <!-- Latest actions -->
-                <div>
-                    <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
-                        <p class="text-[25px] font-[100]">
-                            Nedávna aktivita
-                        </p>
-                        <ul>
-                            <div
-                                v-if="latestActions.length"
-                                class="flex flex-1 h-38 flex-col gap-4"
-                            >
-                                <ActionItem v-for="action in latestActions" :key="action.id">
-                                    <template #icon>
-                                        <Info />
-                                    </template>
-                                    <template #name>
-                                        <span class="text-lg">{{ action.action_type }} - {{ action.event.name }}</span>
-                                    </template>
-                                    <template #ago>
-                                        <span class="text-gray-500 text-sm">{{ minAgo(action.created_at) }} min</span>
-                                    </template>
-                                </ActionItem>
-                            </div>
-                            <div v-else>
-                                <h2>
-                                    Neboli nájdené žiadne výsledky
-                                </h2>
-                            </div>
-                        </ul>
+                <!-- LATEST ACTIONS -->
+                <div class="bg-white p-4 md:p-6 shadow rounded-md">
+                    <p class="font-thin text-xl md:text-2xl mb-4">
+                        Nedávna aktivita
+                    </p>
+
+                    <div v-if="latestActions.length" class="flex flex-col gap-4">
+                        <ActionItem
+                            v-for="action in latestActions"
+                            :key="action.id"
+                        >
+                            <template #icon><Info /></template>
+
+                            <template #name>
+                                <span class="text-base md:text-lg">
+                                    {{ action.action_type }} – {{ action.event.name }}
+                                </span>
+                            </template>
+
+                            <template #ago>
+                                <span class="text-xs md:text-sm text-gray-500">
+                                    {{ minAgo(action.created_at) }} min
+                                </span>
+                            </template>
+                        </ActionItem>
+                    </div>
+
+                    <div v-else>
+                        <p>Žiadna aktivita</p>
                     </div>
                 </div>
+
             </div>
         </template>
     </AuthenticatedLayout>

@@ -25,7 +25,7 @@
 </script>
 
 <template>
-    <div class="relative grid grid-cols-4 gap-4 items-start packages mr-8">
+    <div class="relative grid grid-cols-1 md:grid-cols-4 gap-4 items-start packages mr-8">
         <Input :id="'packageType-' + id" label="Typ balíčka" v-model="model.name" :error="errors.name"/>
         <Input type="number" :id="'packagePrice-' + id" label="Cena balíčka €" v-model="model.price" :error="errors.price"/>
         <Input type="number" :id="'packagePhotoLimitTotal' + id" label="Celkový limit fotiek" v-model="model.photo_limit_total" :error="errors.photo_limit_total"/>
@@ -47,5 +47,6 @@
                 <Trash2 class="text-white translate-y-[-1px]" />
             </button>
         </div>
+        <hr class="text-size-[2px]">
     </div>
 </template>

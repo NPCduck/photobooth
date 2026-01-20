@@ -38,7 +38,7 @@
                         Fotky
                     </p>
                     <div class="bg-overlaybg flex rounded-md">
-                        <div class="bg-overlaybg grid grid-cols-4 gap-4 p-4 rounded-md">
+                        <div class="bg-overlaybg grid grid-cols-1 md:grid-cols-4 gap-4 p-4 rounded-md"> <!-- Možno po dve fotky a pridať filter -->
                             <div v-for="photo in props.event.photos" :key="photo.id" class="p-2 rounded-md flex flex-col items-center bg-white shadow">
                                 <div class="w-full h-48 overflow-hidden rounded-md">
                                     <img :src="getPhotoUrl(photo)" alt="Fotka" class="w-full h-full object-cover">

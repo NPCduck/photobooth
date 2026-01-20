@@ -1,175 +1,125 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { Link, usePage } from '@inertiajs/vue3'
+import { Link } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
+import {
+  LayoutDashboard,
+  Calendar,
+  User,
+  LogOut
+} from 'lucide-vue-next'
 
-import { LayoutDashboard, Calendar, ShoppingCart, ShoppingBasket, Settings, User, LogOut } from 'lucide-vue-next';
+defineProps({
+  isOpen: Boolean,
+})
+defineEmits(['close'])
 
-const isOpen = ref(false);
-const toggleSidebar = () => (isOpen.value = !isOpen.value);
-
-const page = usePage();
-const currentRoute = computed(() => page.component);
-
-const menuItems = ref([
+const menuItems = [
   {
     label: 'Nástenka',
     route: 'dashboard',
     icon: LayoutDashboard,
-    children: [],
-    open: false,
-    selectedChild: null,
   },
   {
     label: 'Eventy',
     icon: Calendar,
     children: [
-      { label: 'Zoznam eventov', route: 'events.index' }
+      { label: 'Zoznam eventov', route: 'events.index' },
     ],
-    open: false,
-    selectedChild: null,
   },
   {
     label: 'Profil',
     icon: User,
     children: [
-      { label: 'Spravovať účet', route: 'profile.edit' }
+      { label: 'Spravovať účet', route: 'profile.edit' },
     ],
-    open: false,
-    selectedChild: null,
   },
-]);
+]
 
-menuItems.value.forEach(item => {
-  if (item.children?.length) {
-    item.children.forEach(child => {
-      if (route().current(child.route)) {
-        item.open = true;
-        item.selectedChild = child.route;
-      }
-    });
-  }
-});
-
-function toggleMenu(item) {
-  // ak má children, len otvoríme/zavrieme dropdown
-  if (item.children?.length) {
-    item.open = !item.open
-    if (item.open && !item.selectedChild) {
-      item.selectedChild = item.children[0].route
-    }
-  }
-}
-function selectChild(item, child) {
-  item.selectedChild = child.route
-}
+const isActive = (name) => route().current(name)
 </script>
 
 <template>
-  <!-- mobile toggle -->
-  <button
-    @click="toggleSidebar"
-    class="md:hidden fixed top-4 left-4 z-50 bg-sidebarbg text-white p-2 rounded-lg"
-  >
-    ☰
-  </button>
-
-  <!-- overlay -->
+  <!-- Overlay (mobile) -->
   <div
     v-if="isOpen"
     class="fixed inset-0 bg-black/40 z-40 md:hidden"
-    @click="toggleSidebar"
-  ></div>
+    @click="$emit('close')"
+  />
 
-  <!-- sidebar -->
+  <!-- Sidebar -->
   <aside
     :class="[
-      'fixed flex flex-col justify-between display-column md:sticky top-[15px] h-[calc(100vh-30px)] bg-sidebarbg rounded-md shadow-md w-72 z-50 transform transition-transform duration-300 text-white',
-      isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0',
+      'fixed md:sticky',
+      'top-[15px]',
+      'left-[15px]',
+      'h-[calc(100vh-30px)]',
+      'w-72',
+      'bg-sidebarbg text-white',
+      'rounded-md shadow-md',
+      'z-50',
+      'transform transition-transform duration-300',
+      isOpen ? 'translate-x-0' : '-translate-x-[120%] md:translate-x-0',
     ]"
   >
-    <div>
-      <div class="p-4 font-bold text-center text-white text-[25px]">PhotoBooth</div>
+    <div class="flex flex-col h-full justify-between">
 
-      <nav class="p-4 ml-4 mr-4 space-y-2 bg-sidebarbg-dark rounded-md">
-        <ul>
-          <li v-for="item in menuItems" :key="item.label" class="mb-2">
-            <!-- Ak má children → správa sa ako toggle -->
-             
-            <Link
-              v-if="item.children?.length"
-              :href=" route(item.children[0].route) "
-              @click="toggleMenu(item)"
-              class="w-full text-left px-3 py-2 rounded-md hover:bg-highlight flex justify-between items-center"
-              :class="{
-                'bg-highlight font-medium':
-                  item.selectedChild && route().current(item.selectedChild),
-              }"
-            >
-              <div class="flex items-center flex-row">
-                <component :is="item.icon" class="w-5 h-5 mr-2" />
-                <span>{{ item.label }}</span>
-              </div>
+      <!-- Logo -->
+      <div>
+        <div class="p-4 text-center text-[25px] font-bold">
+          PhotoBooth
+        </div>
 
-              <svg
-                class="w-4 h-4 transition-transform duration-200"
-                :class="{ 'rotate-90': item.open }"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+        <!-- Nav -->
+        <nav class="mx-4 p-4 bg-sidebarbg-dark rounded-md space-y-2">
+          <ul>
+            <li v-for="item in menuItems" :key="item.label">
+              <Link
+                v-if="item.children"
+                :href="route(item.children[0].route)"
+                class="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-highlight"
+                :class="{ 'bg-highlight font-medium': isActive(item.children[0].route) }"
+                @click="$emit('close')"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </Link>
+                <component :is="item.icon" class="w-5 h-5" />
+                {{ item.label }}
+              </Link>
 
-            <!-- Ak nemá children → je to normálny Link -->
-            <Link
-              v-else
-              :href="route(item.route)"
-              class="w-full text-left px-3 py-2 rounded-md hover:bg-highlight flex items-center"
-              :class="{
-                'bg-highlight font-medium':
-                  route().current(item.route),
-              }"
-            >
-              <component :is="item.icon" class="w-5 h-5 mr-2" />
-              <span>{{ item.label }}</span>
-            </Link>
+              <ul v-if="item.children" class="ml-6 mt-1 space-y-1">
+                <li v-for="child in item.children" :key="child.route">
+                  <Link
+                    :href="route(child.route)"
+                    class="block px-3 py-2 text-sm rounded-md hover:bg-highlight"
+                    :class="{ 'bg-highlight font-medium': isActive(child.route) }"
+                    @click="$emit('close')"
+                  >
+                    {{ child.label }}
+                  </Link>
+                </li>
+              </ul>
 
-            <!-- Dropdown deti -->
-            <ul
-              v-if="item.children?.length && item.open"
-              class="pl-5 mt-1 space-y-1"
-            >
-              <li
-                v-for="child in item.children"
-                :key="child.label"
-                @click="selectChild(item, child)"
-                class="px-3 py-2 rounded-md cursor-pointer"
-                :class="{
-                  'bg-highlight font-medium':
-                    route().current(child.route),
-                  'hover:bg-highlight':
-                    !route().current(child.route),
-                }"
+              <Link
+                v-else
+                :href="route(item.route)"
+                class="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-highlight"
+                :class="{ 'bg-highlight font-medium': isActive(item.route) }"
+                @click="$emit('close')"
               >
-                <Link :href="route(child.route)">{{ child.label }}</Link>
-              </li>
-            </ul>
-          </li>
-        </ul>
-      </nav>
+                <component :is="item.icon" class="w-5 h-5" />
+                {{ item.label }}
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <!-- Logout -->
+      <button
+        class="mx-4 mb-4 flex items-center gap-2 bg-sidebarbg-dark hover:bg-highlight p-3 rounded-md"
+        @click="$inertia.post(route('logout'))"
+      >
+        <LogOut class="w-5 h-5" />
+        Odhlásiť sa
+      </button>
     </div>
-    <button
-      class="inline-flex self-start items-center justify-center bg-sidebarbg-dark rounded-md p-2 ml-4 mb-4 hover:bg-highlight"
-      @click="$inertia.post(route('logout'))"
-    >
-      <LogOut />
-  </Button>
   </aside>
 </template>

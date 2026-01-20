@@ -61,52 +61,59 @@
 <template>
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-row justify-between mb-4">
+            <div class="flex flex-col md:flex-row justify-between mb-4 gap-2 md:gap-0">
                 <h2 class="text-3xl font-normal leading-tight text-gray-800">
                     List eventov
                 </h2>
                 <Link
                     :href="route('events.create')"
-                    class="text-white bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark"
+                    class="text-white hidden md:flex bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark w-full md:w-auto justify-center"
                 >
                     <CalendarPlus />
                     <span>Vytvoriť event</span>
                 </Link>
             </div>
         </template>
+
         <template #default>
-            <div>
+            <div class="flex flex-col gap-4">
+                <Link
+                    :href="route('events.create')"
+                    class="text-white md:hidden bg-sidebarbg rounded-md flex flex-row p-2 gap-2 hover:bg-sidebarbg-dark w-full md:w-auto justify-center"
+                >
+                    <CalendarPlus />
+                    <span>Vytvoriť event</span>
+                </Link>
                 <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
-                    <div class="flex flex-row justify-between items-center">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                         <p class="font-thin text-[25px]">
-                        Zoznam eventov
+                            Zoznam eventov
                         </p>
-                        <!-- Search -->
-                        <div class="flex flex-col gap-4 md:flex-row">
-                            <div class="flex flex-col">
+
+                        <!-- Filtery -->
+                        <div class="flex flex-col md:flex-row gap-2 md:gap-4 w-full md:w-auto">
+                            <div class="flex flex-col flex-1 md:flex-auto">
                                 <label class="text-sm text-gray-600">Vyhľadávanie</label>
                                 <input
                                     v-model="search"
                                     type="text"
                                     placeholder="Názov eventu..."
-                                    class="border rounded-md px-3 py-2"
+                                    class="border rounded-md px-3 py-2 w-full"
                                 />
                             </div>
 
-                            <!-- Status -->
-                            <div class="flex flex-col">
+                            <div class="flex flex-col flex-1 md:flex-auto">
                                 <label class="text-sm text-gray-600">Stav</label>
-                                <select v-model="status" class="border rounded-md px-3 py-2">
+                                <select v-model="status" class="border rounded-md px-3 py-2 w-full">
                                     <option value="">Všetky</option>
                                     <option value="aktuálny">Aktuálny</option>
                                     <option value="ukončený">Ukončený</option>
                                 </select>
                             </div>
 
-                            <!-- Sort -->
-                            <div class="flex flex-col">
+                            <div class="flex flex-col flex-1 md:flex-auto">
                                 <label class="text-sm text-gray-600">Zoradenie</label>
-                                <select v-model="sort" class="border rounded-md pr-8 px-3 py-2">
+                                <select v-model="sort" class="border rounded-md px-3 py-2 w-full">
                                     <option value="">Najnovšie</option>
                                     <option value="name_asc">Názov ↑</option>
                                     <option value="name_desc">Názov ↓</option>
@@ -115,78 +122,55 @@
                                 </select>
                             </div>
 
-                            <!-- Clear -->
                             <button
                                 v-if="search || status || sort"
                                 @click="clearFilters"
-                                class="text-sm text-red-600 flex items-center gap-1 mt-2 md:mt-0"
+                                class="text-sm text-red-600 flex items-center gap-1 mt-2 md:mt-6"
                             >
                                 <X size="16" /> Zrušiť filtre
                             </button>
                         </div>
                     </div>
-                    <ul>
+
+                    <!-- Event list -->
+                    <ul class="flex flex-col gap-2">
                         <div v-if="events.length" class="flex flex-col gap-4">
                             <EventItem
                                 v-for="event in events"
                                 :key="event.name"
-                                class="rounded-md align-center flex"
+                                class="rounded-md flex flex-col md:flex-row md:items-center justify-between gap-2 p-3 bg-itembg"
                             >
                                 <template #name>
-                                    <span class="text-xl truncate w-32 inline-block">{{ event.name }}</span>
+                                    <span class="text-xl font-medium truncate block md:w-32 w-full">{{ event.name }}</span>
                                 </template>
 
                                 <template #attributes>
-                                    <div class="flex flex-row gap-2">
-                                        <div>
-                                            <span><b>Lokácia:</b></span>
-                                            {{ event.details.loc_venue }}
-                                        </div>
-                                        <div>
-                                            <span><b>Dátum:</b></span>
-                                            {{ event.details.date }}
-                                        </div>
-                                        <div>
-                                            <span><b>Obraty:</b></span>
-                                            {{ event.orders.filter(order => order.status === 'completed').reduce((sum, order) => sum + order.amount, 0) }} €
-                                        </div>
-                                        
+                                    <div class="flex flex-col md:flex-row md:gap-4 gap-1 flex-wrap text-sm text-gray-700">
+                                        <div><b>Lokácia:</b> {{ event.details.loc_venue }}</div>
+                                        <div><b>Dátum:</b> {{ event.details.date }}</div>
+                                        <div><b>Obraty:</b> {{ event.orders.filter(order => order.status === 'completed').reduce((sum, order) => sum + order.amount, 0) }} €</div>
                                     </div>
                                 </template>
-                                
+
                                 <template #buttons>
-                                    <Link
-                                        :href="route('events.show', event)"
-                                    >
-                                        <div class="hover:bg-itembg rounded-md p-1">
-                                            <Eye />
-                                        </div>
-                                    </Link>
-                                    <Link
-                                        :href="route('events.photos', event)"
-                                    >
-                                        <div class="hover:bg-itembg rounded-md p-1">
-                                            <Images />
-                                        </div>
-                                    </Link>
-                                    <Link
-                                        :href="route('events.edit', event)"
-                                    >
-                                        <div class="hover:bg-itembg rounded-md p-1">
-                                            <Pencil />
-                                        </div>
-                                    </Link>
-                                    <button
-                                        @click="deleteEvent(event.id)"
-                                    >
-                                        <div class="hover:bg-itembg rounded-md p-1">
-                                            <Trash2 />
-                                        </div>
-                                    </button>
+                                    <div class="flex flex-row gap-2 flex-wrap">
+                                        <Link :href="route('events.show', event)">
+                                            <div class="hover:bg-itembg rounded-md p-1"><Eye /></div>
+                                        </Link>
+                                        <Link :href="route('events.photos', event)">
+                                            <div class="hover:bg-itembg rounded-md p-1"><Images /></div>
+                                        </Link>
+                                        <Link :href="route('events.edit', event)">
+                                            <div class="hover:bg-itembg rounded-md p-1"><Pencil /></div>
+                                        </Link>
+                                        <button @click="deleteEvent(event.id)">
+                                            <div class="hover:bg-itembg rounded-md p-1"><Trash2 /></div>
+                                        </button>
+                                    </div>
                                 </template>
                             </EventItem>
                         </div>
-                        
+
                         <div v-else>
                             <h2 class="text-[20px]">
                                 Neboli nájdené žiadne výsledky
@@ -198,3 +182,4 @@
         </template>
     </AuthenticatedLayout>
 </template>
+

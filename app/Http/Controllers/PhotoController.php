@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
 use App\Models\EventPhoto;
+use App\Models\Action;
 
 class PhotoController extends Controller
 {
@@ -64,6 +65,14 @@ class PhotoController extends Controller
                 'event_id' => $event->id,
                 'event_guest_id' => $guest->id,
                 'path' => "$path/$filename",
+            ]);
+
+            Action::create([
+                'user_id' => $event->user_id,
+                'event_id' => $event->id,
+                'guest_id' => $guest->id,
+                'action_type' => 'photo_upload',
+                'description' => "Hosť s emailom {$guest->email} nahral fotku.",
             ]);
 
             return response()->json([

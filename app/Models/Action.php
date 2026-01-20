@@ -13,6 +13,7 @@ class Action extends Model
     protected $fillable = [
         'user_id',
         'event_id',
+        'guest_id',
         'action_type',
         'description',
     ];
