@@ -144,6 +144,8 @@ class EventController extends Controller
             'client.phone' => 'required|string|min:10|max:15',
             'overlays.file_landing' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
             'overlays.file_frame' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
+            'overlays.frame_position' => 'nullable|string|in:stretch,top-left,top-right,bottom-left,bottom-right,center',
+            'overlays.frame_stretch' => 'nullable|boolean',
         ]);
 
         $event->update([
@@ -204,10 +206,30 @@ class EventController extends Controller
             $overlay_data += $landing ? ['landing_img' => $landing] : [];
             $overlay_data += $frame   ? ['frame_img'   => $frame]   : [];
 
+            // Přidej overlay settings pokud existují
+            if (!empty($data['overlays']['frame_position'])) {
+                $overlay_data['frame_position'] = $data['overlays']['frame_position'];
+            }
+            if (isset($data['overlays']['frame_stretch'])) {
+                $overlay_data['frame_stretch'] = $data['overlays']['frame_stretch'];
+            }
+
             $event->overlays()->updateOrCreate(
                 ['event_id' => $event->id,],
                 $overlay_data
             );
+        } else {
+            // Ak nie sú nové obrázky ale sú overlay settings, aktualizuj ich
+            if (!empty($data['overlays']['frame_position']) || isset($data['overlays']['frame_stretch'])) {
+                $overlay_data = [];
+                if (!empty($data['overlays']['frame_position'])) {
+                    $overlay_data['frame_position'] = $data['overlays']['frame_position'];
+                }
+                if (isset($data['overlays']['frame_stretch'])) {
+                    $overlay_data['frame_stretch'] = $data['overlays']['frame_stretch'];
+                }
+                $event->overlays()->update($overlay_data);
+            }
         }
 
         return redirect()->route('events.show', $event);
@@ -245,6 +267,16 @@ class EventController extends Controller
         $event->load('photos.guest');
 
         return Inertia::render('Events/Photos', [
+            'event' => $event,
+        ]);
+    }
+
+    public function ordersIndex(Event $event) {
+        $this->authorize('view', $event);
+
+        $event->load(['orders.guest', 'orders.items']);
+
+        return Inertia::render('Events/Orders/Index', [
             'event' => $event,
         ]);
     }

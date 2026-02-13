@@ -48,6 +48,11 @@ const statuses = [
     {title : 'ukončený'}
 ]
 
+const types = [
+    {title : 'Online', value: 'online'},
+    {title : 'Naživo', value: 'live'},
+]
+
 const submit = () => {
     //úprava date formátu
     if (form.details.date) {
@@ -196,7 +201,15 @@ addPackage();
                         </p>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <Input id="name" label="Názov eventu" v-model="form.name" :error="form.errors['name']" />
-                            <Input id="type" label="Typ eventu" v-model="form.details.type" :error="form.errors['details.type']" />
+                            <div class="flex flex-col p-2 border border-sidebarbg rounded-md">
+                                <label for="status" class="font-semibold">Typ</label>
+                                <select id="type" v-model="form.details.type" class="rounded-md bg-overlaybg border-0" :error="form.errors['details.type']">
+                                    <option v-for="type in types" :key="type.title" :value="type.value">{{ type.title }}</option>
+                                </select>
+                                <p v-if="form.errors['details.type']" class="text-sm text-red-600 font-bold">
+                                    Toto pole je povinné.
+                                </p>
+                            </div>
                             <div class="flex flex-col p-2 border border-sidebarbg rounded-md">
                                 <label for="date" class="font-semibold">Dátum</label>
                                 <VueDatepicker 

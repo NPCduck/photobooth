@@ -19,7 +19,7 @@ class EventGuest extends Model
     }
 
     public function package() {
-        return $this->belongsTo(EventPackages::class, 'package_id');
+        return $this->belongsTo(EventPackage::class, 'package_id');
     }
 
     public function photos() {

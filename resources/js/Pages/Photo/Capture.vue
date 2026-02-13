@@ -19,6 +19,13 @@ const imageFile = ref(null);
 const finalImageUrl = ref(null);
 const landingImageUrl = ref(null);
 
+/* ================= OVERLAY SETTINGS ================= */
+const overlaySettings = ref({
+    frame_position: 'center',
+    frame_stretch: true
+});
+const overlayImageUrl = ref(null);
+
 /* ================= CAMERA ================= */
 const cameraStream = ref(null);
 const videoRef = ref(null);
@@ -137,36 +144,101 @@ function stopCamera() {
 function takePhoto() {
     if (!videoRef.value) return;
 
+    // Vytvor štvorcový canvas
+    const size = Math.min(videoRef.value.videoWidth, videoRef.value.videoHeight);
     const canvas = document.createElement('canvas');
-    canvas.width = videoRef.value.videoWidth;
-    canvas.height = videoRef.value.videoHeight;
+    canvas.width = size;
+    canvas.height = size;
 
     const ctx = canvas.getContext('2d');
-    ctx.drawImage(videoRef.value, 0, 0);
+    
+    // Nakresli video centované na štvorcový canvas
+    const offsetX = (videoRef.value.videoWidth - size) / 2;
+    const offsetY = (videoRef.value.videoHeight - size) / 2;
+    
+    ctx.drawImage(
+        videoRef.value,
+        offsetX, offsetY, size, size,
+        0, 0, size, size
+    );
 
-    const overlayUrl = route('private.image', {
-        user_id: props.event.user_id,
-        event_id: props.event.id,
-        path: 'overlays',
-        file: 'frame_img',
-    });
+    // Aplikuj overlay do fotky
+    if (overlayImageUrl.value) {
+        const overlay = new Image();
+        overlay.src = overlayImageUrl.value;
+        overlay.crossOrigin = 'anonymous';
 
-    const overlay = new Image();
-    overlay.src = overlayUrl;
+        overlay.onload = () => {
+            if (overlaySettings.value.frame_stretch) {
+                ctx.drawImage(overlay, 0, 0, size, size);
+            } else {
+                const overlayWidth = overlay.width;
+                const overlayHeight = overlay.height;
+                let x = 0, y = 0;
 
-    overlay.onload = () => {
-        ctx.drawImage(overlay, 0, 0, canvas.width, canvas.height);
+                switch (overlaySettings.value.frame_position) {
+                    case 'top-left':
+                        x = 0;
+                        y = 0;
+                        break;
+                    case 'top-right':
+                        x = size - overlayWidth;
+                        y = 0;
+                        break;
+                    case 'bottom-left':
+                        x = 0;
+                        y = size - overlayHeight;
+                        break;
+                    case 'bottom-right':
+                        x = size - overlayWidth;
+                        y = size - overlayHeight;
+                        break;
+                    case 'center':
+                        x = (size - overlayWidth) / 2;
+                        y = (size - overlayHeight) / 2;
+                        break;
+                }
+                ctx.drawImage(overlay, x, y);
+            }
+            finishPhoto(canvas);
+        };
+        overlay.onerror = () => {
+            finishPhoto(canvas);
+        };
+    } else {
         finishPhoto(canvas);
-    };
-
-    overlay.onerror = () => {
-        finishPhoto(canvas);
-    };
+    }
 }
 
 function finishPhoto(canvas) {
     finalImageUrl.value = canvas.toDataURL('image/jpeg', 0.9);
     stopCamera();
+}
+
+function getOverlayStyle() {
+    if (overlaySettings.value.frame_stretch) {
+        return {
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover'
+        };
+    }
+
+    // Pre fixné rozlíšenia - aspoň nejaký CSS fallback
+    const positions = {
+        'top-left': { top: 0, left: 0 },
+        'top-right': { top: 0, right: 0 },
+        'bottom-left': { bottom: 0, left: 0 },
+        'bottom-right': { bottom: 0, right: 0 },
+        'center': { top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }
+    };
+
+    return {
+        ...positions[overlaySettings.value.frame_position] || positions.center,
+        objectFit: 'contain'
+    };
 }
 
 /* ================= UPLOAD ================= */
@@ -230,6 +302,19 @@ onMounted(() => {
         path: 'overlays',
         file: 'landing_img',
     });
+
+    overlayImageUrl.value = route('private.image', {
+        user_id: props.event.user_id,
+        event_id: props.event.id,
+        path: 'overlays',
+        file: 'frame_img',
+    });
+
+    // Načítaj overlay nastavenia
+    if (props.event.overlays) {
+        overlaySettings.value.frame_position = props.event.overlays.frame_position || 'center';
+        overlaySettings.value.frame_stretch = props.event.overlays.frame_stretch !== false;
+    }
 });
 </script>
 
@@ -267,13 +352,21 @@ onMounted(() => {
             </button>
 
             <div v-if="cameraStream" class="space-y-2">
-                <video
-                    ref="videoRef"
-                    autoplay
-                    playsinline
-                    muted
-                    class="w-full aspect-video bg-black rounded"
-                />
+                <div class="relative w-full max-w-sm aspect-square bg-black rounded overflow-hidden mx-auto">
+                    <video
+                        ref="videoRef"
+                        autoplay
+                        playsinline
+                        muted
+                        class="w-full h-full object-cover"
+                    />
+                    <img
+                        v-if="overlayImageUrl"
+                        :src="overlayImageUrl"
+                        :style="getOverlayStyle()"
+                        class="absolute"
+                    />
+                </div>
                 <button @click="takePhoto" class="w-full bg-green-600 text-white py-2 rounded">
                     Odfoť
                 </button>

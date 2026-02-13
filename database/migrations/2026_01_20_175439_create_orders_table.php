@@ -1,0 +1,57 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('orders', function (Blueprint $table) {
+            $table->id();
+
+            // vlastník (organizátor eventu)
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+
+            // kontext
+            $table->foreignId('event_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('guest_id')->constrained('event_guests')->cascadeOnDelete();
+
+            // verejný identifikátor (QR / link)
+            $table->uuid('code')->unique();
+
+            // stav objednávky
+            $table->enum('status', [
+                'pending',
+                'paid',
+                'cancelled',
+                'expired'
+            ])->default('pending');
+
+            // suma
+            $table->decimal('amount', 10, 2);
+
+            // platba (zatiaľ test)
+            $table->boolean('is_test')->default(true);
+            $table->string('payment_gateway')->nullable();
+            $table->string('payment_reference')->nullable();
+
+            $table->timestamps();
+
+            // ochrana: 1 guest = 1 objednávka
+            $table->unique(['guest_id']);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('orders');
+    }
+};

@@ -5,7 +5,7 @@ import {
   LayoutDashboard,
   Calendar,
   User,
-  LogOut
+  LogOut,
 } from 'lucide-vue-next'
 
 defineProps({

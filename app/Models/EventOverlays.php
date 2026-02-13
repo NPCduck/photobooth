@@ -13,7 +13,9 @@ class EventOverlays extends Model
     protected $fillable = [
         'event_id',
         'landing_img',
-        'frame_img'
+        'frame_img',
+        'frame_position',
+        'frame_stretch'
     ];
 
     public function event() {

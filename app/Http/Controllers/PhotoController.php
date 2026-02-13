@@ -3,13 +3,21 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Event;
-use App\Models\EventGuest;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+use App\Models\Event;
+use App\Models\EventGuest;
 use App\Models\EventPhoto;
 use App\Models\Action;
+use App\Models\Order;
+use App\Models\EventPackage;
+
+use Inertia\Inertia;
+
+use App\Http\Controllers\OrderController;
 
 class PhotoController extends Controller
 {
@@ -17,6 +25,7 @@ class PhotoController extends Controller
         // Logic to handle photo capture using the provided token
         $event = Event::where('public_token', $token)
             ->where('qr_active', true)
+            ->with('overlays')
             ->firstOrFail();
 
         return Inertia::render('Photo/Capture', [
@@ -34,53 +43,66 @@ class PhotoController extends Controller
             'guest_id' => 'required|integer',
         ]);
 
-        // ✅ hosť MUSÍ patriť k eventu
+        // Hosť MUSÍ patriť k eventu
         $guest = EventGuest::where('id', $request->guest_id)
             ->where('event_id', $event->id)
             ->with('package')
             ->firstOrFail();
 
-        $uploadedCount = $guest->photos()->count();
-        $limit = $guest->package?->photo_limit_person ?? 0;
-
-        if ($uploadedCount >= $limit) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Dosiahnutý limit fotiek.',
-            ], 403);
-        }
-
         return \DB::transaction(function () use ($request, $event, $guest) {
 
+            // Zamkneme riadok hosťa (race condition protection)
+            $guest = EventGuest::where('id', $guest->id)
+                ->lockForUpdate()
+                ->with('package')
+                ->first();
+
+            $limit = $guest->package?->photo_limit_person;
+
+            // Ak má balík limit a je dosiahnutý
+            if ($limit !== null && $guest->photos_uploaded >= $limit) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Dosiahnutý limit fotiek.',
+                ], 403);
+            }
+
+            // Uloženie fotky
             $path = "user_{$event->user_id}/event_{$event->id}/photos";
             $filename = uniqid('photo_', true) . '.jpg';
 
-            Storage::disk('private')->putFileAs(
+            \Storage::disk('private')->putFileAs(
                 $path,
                 $request->file('photo'),
                 $filename
             );
 
+            // DB záznam fotky
             EventPhoto::create([
-                'event_id' => $event->id,
+                'event_id'       => $event->id,
                 'event_guest_id' => $guest->id,
-                'path' => "$path/$filename",
+                'path'           => "$path/$filename",
             ]);
 
+            // Audit log
             Action::create([
-                'user_id' => $event->user_id,
-                'event_id' => $event->id,
-                'guest_id' => $guest->id,
-                'action_type' => 'photo_upload',
-                'description' => "Hosť s emailom {$guest->email} nahral fotku.",
+                'user_id'     => $event->user_id,
+                'event_id'    => $event->id,
+                'guest_id'    => $guest->id,
+                'action_type' => 'Nahratie fotky',
+                'description' => "Hosť {$guest->email} nahral fotku.",
             ]);
+
+            // Zvýšenie počtu nahratých fotiek (jediný zdroj pravdy)
+            $guest->increment('photos_uploaded');
 
             return response()->json([
-                'success' => true,
+                'success'  => true,
                 'redirect' => route('capture.thankYou', $event->public_token),
             ]);
         });
     }
+
 
 
     public function checkEmail(Request $request, $token) {
@@ -130,7 +152,7 @@ class PhotoController extends Controller
         ]);
     }
 
-    function createGuest(Request $request, $token) {
+    public function createGuest(Request $request, $token) {
         $event = Event::where('public_token', $token)
             ->where('qr_active', true)
             ->firstOrFail();
@@ -140,28 +162,33 @@ class PhotoController extends Controller
             'package_id' => 'required|exists:event_packages,id',
         ]);
 
-        // skontrolovať, či už neexistuje
-        $existingGuest = EventGuest::where('event_id', $event->id)
-            ->where('email', $request->email)
-            ->first();
+        $package = EventPackage::where('id', $request->package_id)
+            ->where('event_id', $event->id)
+            ->firstOrFail();
+        
+        $photo_limit = $package->photo_limit_person;
 
-        if ($existingGuest) {
+        return DB::transaction(function () use ($request, $event, $photo_limit) {
+
+            $guest = EventGuest::create([
+                'event_id' => $event->id,
+                'email' => $request->email,
+                'package_id' => $request->package_id,
+                'photo_limit' => $photo_limit,
+            ]);
+
+            // ⬇️ delegujeme tvorbu objednávky
+            app(OrderController::class)->storeForGuestInternal(
+                $guest,
+                $event,
+                $request->package_id
+            );
+
             return response()->json([
-                'success' => false,
-                'message' => 'Host už existuje. Prosím, skontrolujte email.',
-            ], 409);
-        }
-
-        $guest = EventGuest::create([
-            'event_id' => $event->id,
-            'email' => $request->email,
-            'package_id' => $request->package_id,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'guest_id' => $guest->id,
-        ]);
+                'success' => true,
+                'guest_id' => $guest->id,
+            ]);
+        });
     }
 
     public function getPhotoUrl($path) {

@@ -80,7 +80,7 @@ class Event extends Model
     }
 
     public function packages() {
-        return $this->hasMany(EventPackages::class);
+        return $this->hasMany(EventPackage::class);
     }
 
     public function overlays() {
