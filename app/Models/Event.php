@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -12,11 +13,14 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 class Event extends Model
 {
 
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
-        'name'
+        'name',
+        'created_by',
+        'updated_by',
+        'deleted_by'
     ];
 
     protected $with = ['details', 'packages', 'overlays'];

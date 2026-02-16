@@ -22,7 +22,7 @@ return new class extends Migration
             // snapshot dát
             $table->string('name');
             $table->decimal('unit_price', 10, 2);
-            $table->integer('quantity')->default(1);
+            $table->unsignedInteger('quantity')->default(1);
             $table->decimal('total_price', 10, 2);
 
             $table->timestamps();

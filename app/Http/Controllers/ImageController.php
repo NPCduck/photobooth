@@ -5,10 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
+use App\Models\Event;
 
 class ImageController extends Controller
 {
     public function showPrivateImage($user_id, $event_id, $path = null, $file) {
+        // 🔴 SECURITY: Autorizácia - musí byť vlastník
+        if ((int)$user_id !== auth()->id()) {
+            abort(403, 'Nemáte oprávnenie pristupovať k tomuto súboru');
+        }
+
+        // 🔴 SECURITY: Kontrola event ownership
+        $event = Event::where('id', $event_id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
         $fullPath = "user_{$user_id}/event_{$event_id}/{$path}";
 
@@ -33,6 +43,16 @@ class ImageController extends Controller
     }
 
     public function showQrCode($user_id, $event_id, $file) {
+        // 🔴 SECURITY: Autorizácia - musí byť vlastník
+        if ((int)$user_id !== auth()->id()) {
+            abort(403, 'Nemáte oprávnenie pristupovať k tomuto súboru');
+        }
+
+        // 🔴 SECURITY: Kontrola event ownership
+        $event = Event::where('id', $event_id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
         $fullPath = "user_{$user_id}/event_{$event_id}";
 
         $files = Storage::disk('private')->files($fullPath);

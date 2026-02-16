@@ -8,6 +8,9 @@ use App\Models\Event;
 class QrController extends Controller
 {
     function activateQr(Event $event) {
+        // 🔴 SECURITY: Explicitná autorizácia
+        $this->authorize('update', $event);
+        
         $event->qr_active = true;
         $event->save();
 
@@ -15,9 +18,12 @@ class QrController extends Controller
     }
 
     function deactivateQr(Event $event) {
+        // 🔴 SECURITY: Explicitná autorizácia
+        $this->authorize('update', $event);
+        
         $event->qr_active = false;
         $event->save();
 
-        return redirect()->back()->with('success', 'QR kód bol aktivovaný.');
+        return redirect()->back()->with('success', 'QR kód bol deaktivovaný.');
     }
 }

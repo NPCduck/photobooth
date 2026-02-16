@@ -34,11 +34,20 @@ Route::get('/private-image/user_{user_id}/event_{event_id}/{file}', [ImageContro
     ->name('private.qrcode');
 
 
-// Public photo capture routes
-Route::get('/capture/{token}', [PhotoController::class, 'show'])->name('capture.show');
-Route::post('/capture/{token}/check-email', [PhotoController::class, 'checkEmail'])->name('capture.checkEmail');
-Route::post('/capture/{token}/upload', [PhotoController::class, 'upload'])->name('capture.upload');
-Route::post('/capture/{token}/create-guest', [PhotoController::class, 'createGuest'])->name('capture.createGuest');
+// Public photo capture routes - 🔴 SECURITY: s rate limiting!
+Route::middleware('throttle:60,1')->group(function () {
+    Route::get('/capture/{token}', [PhotoController::class, 'show'])->name('capture.show');
+    Route::post('/capture/{token}/check-email', [PhotoController::class, 'checkEmail'])->name('capture.checkEmail');
+});
+
+Route::post('/capture/{token}/upload', [PhotoController::class, 'upload'])
+    ->middleware('throttle:20,1')  // 20 uploadov/minútu
+    ->name('capture.upload');
+
+Route::post('/capture/{token}/create-guest', [PhotoController::class, 'createGuest'])
+    ->middleware('throttle:30,1')
+    ->name('capture.createGuest');
+
 Route::get('/capture/{token}/thank-you',
     fn ($token) => Inertia::render('Photo/ThankYou', ['token' => $token]))
     ->name('capture.thankYou');
@@ -48,6 +57,7 @@ Route::get('/order/{code}', [OrderController::class, 'showByCode'])
     ->name('orders.show.by-code');
 
 Route::post('/orders/create-for-guest', [OrderController::class, 'storeForGuest'])
+    ->middleware('throttle:10,1')
     ->name('orders.createForGuest');
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -90,9 +100,11 @@ Route::middleware('auth:sanctum')->group(function () {
         ]);
     })->name('dashboard');
 
-    // QR Code management
-    Route::post('/qr/activate/{event}', [QrController::class, 'activateQr'])->name('events.qr.activate');
-    Route::post('/qr/deactivate/{event}', [QrController::class, 'deactivateQr'])->name('events.qr.deactivate');
+    // 🔴 SECURITY: QR Code management - s rate limiting
+    Route::middleware('throttle:5,1')->group(function () {
+        Route::post('/qr/activate/{event}', [QrController::class, 'activateQr'])->name('events.qr.activate');
+        Route::post('/qr/deactivate/{event}', [QrController::class, 'deactivateQr'])->name('events.qr.deactivate');
+    });
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -117,8 +129,13 @@ Route::middleware('auth:sanctum')->group(function () {
     // Orders
     Route::get('orders/', [OrderController::class, 'index'])->name('orders.index');
     Route::post('orders/create-for-guest', [OrderController::class, 'storeForGuest']);
-    Route::post('orders/{order}/paid', [OrderController::class, 'markAsPaid']);
-    Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
+    
+    // 🔴 SECURITY: Hromadné operácie s rate limiting
+    Route::middleware('throttle:10,1')->group(function () {
+        Route::post('orders/{order}/paid', [OrderController::class, 'markAsPaid']);
+        Route::post('orders/{order}/cancel', [OrderController::class, 'cancel']);
+    });
+    
     Route::get('orders/{code}', [OrderController::class, 'showByCode'])->name('orders.show.bycode');
 });
 

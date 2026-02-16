@@ -3,15 +3,19 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EventGuest extends Model
 {
+    use SoftDeletes;
+    
     protected $fillable = [
         'event_id',
         'email',
         'package_id',
         'photo_limit',
-        'photos_uploaded'
+        'photos_uploaded',
+        'qr_expires_at'
     ];
 
     public function event() {

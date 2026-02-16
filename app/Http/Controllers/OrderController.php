@@ -14,9 +14,6 @@ use Illuminate\Support\Facades\DB;
 
 class OrderController extends Controller
 {
-    /**
-     * Vytvorenie testovacej objednávky pri vytvorení guest-a
-     */
     public function storeForGuest(Request $request) {
         $request->validate([
             'guest_id'   => ['required', 'exists:event_guests,id'],
@@ -25,7 +22,11 @@ class OrderController extends Controller
 
         $guest   = EventGuest::with('event')->findOrFail($request->guest_id);
         $event   = $guest->event;
-        $package = EventPackage::findOrFail($request->package_id);
+        
+        // 🔴 SECURITY: Balík MUSÍ patriť k eventu hosta!
+        $package = EventPackage::where('id', $request->package_id)
+            ->where('event_id', $event->id)
+            ->firstOrFail();
 
         return DB::transaction(function () use ($guest, $event, $package) {
 
@@ -63,7 +64,13 @@ class OrderController extends Controller
         Event $event,
         int $packageId
     ): Order {
-        $package = EventPackage::findOrFail($packageId);
+        // 🔴 SECURITY: Balík MUSÍ patriť k eventu!
+        $package = EventPackage::where('id', $packageId)
+            ->where('event_id', $event->id)
+            ->firstOrFail();
+
+        // 🔴 SECURITY: Snapshot ceny - nikdy sa nezmení!
+        $snapshotPrice = $package->price;
 
         $order = Order::create([
             'user_id' => $event->user_id,
@@ -71,15 +78,16 @@ class OrderController extends Controller
             'guest_id' => $guest->id,
             'code' => Str::uuid(),
             'status' => 'pending',
-            'amount' => $package->price,
+            'amount' => $snapshotPrice,
         ]);
 
+        // 🔴 SECURITY: OrderItem je jediný zdroj pravdy
         $order->items()->create([
             'package_id' => $package->id,
             'name' => $package->name,
-            'unit_price' => $package->price,
+            'unit_price' => $snapshotPrice,
             'quantity' => 1,
-            'total_price' => $package->price,
+            'total_price' => $snapshotPrice,
         ]);
 
         return $order;
@@ -87,10 +95,13 @@ class OrderController extends Controller
 
     /**
      * Detail objednávky podľa kódu (guest pohľad)
+     * 🔴 SECURITY: Iba autentifikovaní useri - iba vlastné objednávky
      */
     public function showByCode(string $code) {
+        // 🔴 SECURITY: Iba autentifikovaní useri - iba vlastné objednávky
         $order = Order::with(['items', 'guest', 'event'])
             ->where('code', $code)
+            ->where('user_id', auth()->id())
             ->firstOrFail();
 
         return response()->json($order);
@@ -113,6 +124,13 @@ class OrderController extends Controller
      */
     public function markAsPaid(Order $order) {
         $this->authorize('update', $order);
+
+        // 🔴 SECURITY: Iba pending objednávky môžu byť označené
+        if ($order->status !== 'pending') {
+            return response()->json([
+                'message' => 'Túto objednávku sa nedá označiť ako zaplatenú',
+            ], 422);
+        }
 
         $order->update([
             'status'            => 'paid',

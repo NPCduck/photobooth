@@ -43,24 +43,50 @@ class EventController extends Controller
     }
 
     public function store(Request $request) {
+        // 🔴 SECURITY: Rozšírená validácia s limity
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'details.type' => 'required|string|max:255',
-            'details.hosts' => 'required|integer',
+            'details.hosts' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:10000',  // 🔴 Rozumný limit
+            ],
             'details.status' => 'required|string|max:255',
             'details.date' => 'required|date',
             'details.time_start' => 'required|date_format:H:i',
             'details.time_end' => 'nullable|date_format:H:i',
-            'details.status' => 'required|string|max:255',
             'details.loc_venue' => 'required|string|max:255',
             'details.loc_address' => 'required|string|max:255',
             'packages.*.name' => 'required|string|max:255',
-            'packages.*.price' => 'required|numeric|min:0',
-            'packages.*.photo_limit_total' => 'required|integer|min:0',
-            'packages.*.photo_limit_person' => 'nullable|integer|min:0',
-            'client.name' => 'required|string',
-            'client.email' => 'required|string',
-            'client.phone' => 'required|string|min:10|max:15',
+            'packages.*.price' => [
+                'required',
+                'numeric',
+                'min:0',
+                'max:999999.99',  // 🔴 Maximálna cena
+            ],
+            'packages.*.photo_limit_total' => [
+                'required',
+                'integer',
+                'min:0',
+                'max:10000',  // 🔴 Rozumný limit
+            ],
+            'packages.*.photo_limit_person' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'max:1000',  // 🔴 Maximálne fotky na osobu
+            ],
+            'client.name' => 'required|string|max:255',
+            'client.email' => 'required|email|max:255',
+            'client.phone' => [
+                'required',
+                'string',
+                'regex:/^[0-9+\-\s()]+$/',  // 🔴 Iba telefónne čísla
+                'min:10',
+                'max:15',
+            ],
             'overlays.landing_img' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
             'overlays.frame_img' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
         ]);
@@ -85,9 +111,16 @@ class EventController extends Controller
             if (!empty($data['overlays']['landing_img'])) {
                 $file = $data['overlays']['landing_img'];
 
+                // 🔴 SECURITY: Validuj extension
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (!in_array($extension, $allowedExtensions)) {
+                    return back()->withErrors(['overlays.landing_img' => 'Neplatný typ súboru']);
+                }
+
                 $path = $file->storeAs(
                     'user_' . $user_id . '/event_' . $event->id . '/overlays',
-                    'landing_img.'.$file->getClientOriginalExtension(),
+                    'landing_img.'.$extension,
                     'private');
                 $landing = true;
             }
@@ -95,9 +128,16 @@ class EventController extends Controller
             if (!empty($data['overlays']['frame_img'])) {
                 $file = $data['overlays']['frame_img'];
 
+                // 🔴 SECURITY: Validuj extension
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (!in_array($extension, $allowedExtensions)) {
+                    return back()->withErrors(['overlays.frame_img' => 'Neplatný typ súboru']);
+                }
+
                 $path = $file->storeAs(
                     'user_' . $user_id . '/event_' . $event->id . '/overlays',
-                    'frame_img.'.$file->getClientOriginalExtension(),
+                    'frame_img.'.$extension,
                     'private');
                 $frame = true;
             }
@@ -124,29 +164,67 @@ class EventController extends Controller
     public function update(Request $request, Event $event) {
         $this->authorize('update', $event);
 
+        // 🔴 SECURITY: Rozšírená validácia s limity
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'details.type' => 'required|string|max:255',
-            'details.hosts' => 'required|integer',
+            'details.hosts' => [
+                'required',
+                'integer',
+                'min:1',
+                'max:10000',
+            ],
             'details.status' => 'required|string|max:255',
             'details.date' => 'required|date',
             'details.time_start' => 'required|date_format:H:i',
             'details.time_end' => 'nullable|date_format:H:i',
-            'details.status' => 'required|string|max:255',
             'details.loc_venue' => 'required|string|max:255',
             'details.loc_address' => 'required|string|max:255',
+            'packages' => 'required|array',
+            'packages.*.id' => 'nullable|exists:event_packages,id',
             'packages.*.name' => 'required|string|max:255',
-            'packages.*.price' => 'required|numeric|min:0',
-            'packages.*.photo_limit_total' => 'required|integer|min:0',
-            'packages.*.photo_limit_person' => 'nullable|integer|min:0',
-            'client.name' => 'required|string',
-            'client.email' => 'required|string',
-            'client.phone' => 'required|string|min:10|max:15',
+            'packages.*.price' => [
+                'required',
+                'numeric',
+                'min:0',
+                'max:999999.99',
+            ],
+            'packages.*.photo_limit_total' => [
+                'required',
+                'integer',
+                'min:0',
+                'max:10000',
+            ],
+            'packages.*.photo_limit_person' => [
+                'nullable',
+                'integer',
+                'min:0',
+                'max:1000',
+            ],
+            'client.name' => 'required|string|max:255',
+            'client.email' => 'required|email|max:255',
+            'client.phone' => [
+                'required',
+                'string',
+                'regex:/^[0-9+\-\s()]+$/',
+                'min:10',
+                'max:15',
+            ],
             'overlays.file_landing' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
             'overlays.file_frame' => 'nullable|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
             'overlays.frame_position' => 'nullable|string|in:stretch,top-left,top-right,bottom-left,bottom-right,center',
             'overlays.frame_stretch' => 'nullable|boolean',
         ]);
+
+        // 🔴 SECURITY: Validácia existujúcich balíčkov
+        foreach ($data['packages'] as $package) {
+            if (isset($package['id'])) {
+                // Kontrola, že balík patrí k tomuto eventu!
+                \App\Models\EventPackage::where('id', $package['id'])
+                    ->where('event_id', $event->id)
+                    ->firstOrFail();
+            }
+        }
 
         $event->update([
             'name' => $data['name'],
@@ -185,9 +263,16 @@ class EventController extends Controller
             if (!empty($data['overlays']['file_landing'])) {
                 $file = $data['overlays']['file_landing'];
 
+                // 🔴 SECURITY: Validuj extension
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (!in_array($extension, $allowedExtensions)) {
+                    return back()->withErrors(['overlays.file_landing' => 'Neplatný typ súboru']);
+                }
+
                 $path = $file->storeAs(
                     'user_' . $user_id . '/event_' . $event->id . '/overlays',
-                    'landing_img.'.$file->getClientOriginalExtension(),
+                    'landing_img.'.$extension,
                     'private');
                 $landing = true;
             }
@@ -195,9 +280,16 @@ class EventController extends Controller
             if (!empty($data['overlays']['file_frame'])) {
                 $file = $data['overlays']['file_frame'];
 
+                // 🔴 SECURITY: Validuj extension
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+                $extension = strtolower($file->getClientOriginalExtension());
+                if (!in_array($extension, $allowedExtensions)) {
+                    return back()->withErrors(['overlays.file_frame' => 'Neplatný typ súboru']);
+                }
+
                 $path = $file->storeAs(
                     'user_' . $user_id . '/event_' . $event->id . '/overlays',
-                    'frame_img.'.$file->getClientOriginalExtension(),
+                    'frame_img.'.$extension,
                     'private');
                 $frame = true;
             }

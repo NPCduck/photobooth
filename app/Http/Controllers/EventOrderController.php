@@ -32,10 +32,12 @@ class EventOrderController extends Controller
     }
 
     /**
-     * Zobrazenie detailov konktrétnej objednávky pre event
+     * Zobrazenie detailov konkrétnej objednávky pre event
      */
     public function show(Event $event, Order $order) {
         $this->authorize('view', $event);
+        // 🔴 SECURITY: Explicitná autorizácia Order
+        $this->authorize('view', $order);
 
         if ($order->event_id !== $event->id) {
             abort(404);

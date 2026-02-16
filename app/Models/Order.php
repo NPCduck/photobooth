@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Order extends Model
 {
+    use SoftDeletes;
+    
     protected $fillable = [
         'user_id',
         'event_id',
@@ -16,6 +19,8 @@ class Order extends Model
         'is_test',
         'payment_gateway',
         'payment_reference',
+        'cancelled_reason',
+        'cancelled_by',
     ];
 
     public function user()
