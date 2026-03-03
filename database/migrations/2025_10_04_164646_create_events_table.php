@@ -40,7 +40,7 @@ return new class extends Migration
             $table->string('name');
             $table->decimal('price', 6, 2);
             $table->unsignedInteger('photo_limit_total');
-            $table->unsignedInteger('photo_limit_person')->nullable();
+            $table->unsignedInteger('photo_limit_person');
             $table->timestamps();
         });
 

@@ -14,6 +14,7 @@ class EventOverlays extends Model
         'event_id',
         'landing_img',
         'frame_img',
+        'frame_svg',
         'frame_position',
         'frame_stretch'
     ];

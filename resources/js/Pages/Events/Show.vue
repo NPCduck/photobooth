@@ -11,6 +11,8 @@ const props = defineProps({
 
 const overlayPosition = ref(props.event.overlays?.frame_position || 'center');
 const overlayStretch = ref(props.event.overlays?.frame_stretch !== false);
+const svgFile = ref(null);
+
 
 function getImg(path, filename) {
     const eventId = props.event.id;
@@ -37,6 +39,41 @@ function getQr(filename) {
         file: filename,
     };
     return route('private.qrcode', params);
+}
+
+function getSvgFrame() {
+    return route('private.frameSvg', {
+        user_id: props.event.user_id,
+        event_id: props.event.id,
+        path: 'overlays',
+        file: 'frame.svg',
+    });
+}
+
+async function uploadSvgFrame() {
+    if (svgFile.value.files.length === 0) {
+        alert('Vyberte SVG soubor k nahrání.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('frame_svg', svgFile.value.files[0]);
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    try {
+        await fetch(route('events.frameSvg.upload', props.event.id), {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            body: formData,
+        });
+        // Prípadne reload alebo notifikácia
+        window.location.reload();
+    } catch (e) {
+        alert('Chyba pri nahrávaní SVG!');
+    }
 }
 
 function activateQr() {
@@ -244,7 +281,7 @@ function saveOverlaySettings() {
                                 <div><span class="font-semibold">Limit spolu:</span> {{ pckg.photo_limit_total }}</div>
                                 <div>
                                     <span class="font-semibold">Na osobu:</span>
-                                    {{ pckg.photo_limit_person ?? 'neobmedzené' }}
+                                    {{ pckg.photo_limit_person == 0 ? 'neobmedzené' : pckg.photo_limit_person }}
                                 </div>
                             </div>
                         </div>
@@ -312,6 +349,36 @@ function saveOverlaySettings() {
                         </button>
                     </div>
                 </div>
+
+                <!-- NASTAVENIA RÁMU -->
+                <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
+                    <p class="font-thin text-xl sm:text-2xl md:text-[25px]">Nastavenia rámu</p>
+                    <p v-if="!event.overlays?.frame_svg"
+                        class="text-sm text-yellow-600 bg-yellow-100 border border-yellow-300 rounded-md p-3"
+                    >
+                        Svg súbor nie je nahratý!
+                    </p>
+                    <div v-if="event.overlays?.frame_svg"
+                        class="rounded-md p-3 sm:p-4 flex flex-col gap-4"
+                    >
+                        <img
+                            v-if="event.overlays?.frame_svg"
+                            :src="getSvgFrame()"
+                            class="w-full max-h-[400px] object-contain mx-auto"
+                        />
+                    </div>
+                    <div class="p-4 text-center">
+                        <form class="grid grid-cols-2 gap-4"
+                            @submit.prevent="uploadSvgFrame"
+                        >
+                            <input type="file" name="frame_svg" ref="svgFile" accept=".svg" class="border rounded px-3 py-2 w-full">
+                            <button type="submit" class="bg-sidebarbg text-white p-3 rounded-md hover:bg-sidebarbg-dark font-semibold">
+                                Nahrať SVG rám
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- QR KÓD -->
                 <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4">
                     <p class="font-thin text-[25px]">
                         QR kód

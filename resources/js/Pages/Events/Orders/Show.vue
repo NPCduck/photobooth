@@ -79,7 +79,7 @@ function getPhotoUrl(photo) {
                 <p><span class="font-semibold">Status:</span> {{ order.status }}</p>
                 <p><span class="font-semibold">Suma:</span> {{ order.amount }} €</p>
                 <p><span class="font-semibold">Kód objednávky:</span> {{ order.code }}</p>
-                <p><span class="font-semibold">Nahraté fotky:</span> {{ order.guest.photos_uploaded }} / {{ order.guest.photo_limit }}</p>
+                <p><span class="font-semibold">Nahraté fotky:</span> {{ order.guest.photos_uploaded }} / {{ order.guest.photo_limit == 0 ? 'neobmedzené' : order.guest.photo_limit }}</p>
             </div>
 
             <hr>
@@ -99,7 +99,7 @@ function getPhotoUrl(photo) {
                     <p><span class="font-semibold">Názov:</span> {{ item.name }}</p>
                     <p><span class="font-semibold">Cena:</span> {{ item.unit_price }} €</p>
                     <p><span class="font-semibold">Spolu:</span> {{ item.total_price }} €</p>
-                    <p><span class="font-semibold">Limit fotiek:</span> {{ order.guest.photo_limit }}</p>
+                    <p><span class="font-semibold">Limit fotiek:</span> {{ order.guest.photo_limit == 0 ? 'neobmedzené' : order.guest.photo_limit }}</p>
                 </div>
             </div>
             <!-- Fotky -->

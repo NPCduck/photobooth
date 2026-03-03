@@ -66,10 +66,10 @@ class PhotoController extends Controller
                 abort(404, 'Hosť nenájdený');
             }
 
-            $limit = $guest->package?->photo_limit_person;
+            $limit = $guest->package->photo_limit_person;
 
             // 🔴 SECURITY: Ak má balík limit a je dosiahnutý
-            if ($limit !== null && $guest->photos_uploaded >= $limit) {
+            if ($limit !== 0 && $guest->photos_uploaded >= $limit) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Dosiahnutý limit fotiek.',
@@ -147,10 +147,10 @@ class PhotoController extends Controller
         }
 
         $uploadedCount = $guest->photos()->count();
-        $limit = $guest->package?->photo_limit_person ?? 0;
+        $limit = $guest->package->photo_limit_person;
 
         //prekročený limit
-        if ($uploadedCount >= $limit) {
+        if ($uploadedCount >= $limit && $limit !== 0) {
             return response()->json([
                 'exists' => true,
                 'allowed' => false,
@@ -163,7 +163,7 @@ class PhotoController extends Controller
             'exists' => true,
             'allowed' => true,
             'guest_id' => $guest->id,
-            'remaining' => $limit - $uploadedCount,
+            'remaining' => $limit == 0 ? 0 : $limit - $uploadedCount,
         ]);
     }
 

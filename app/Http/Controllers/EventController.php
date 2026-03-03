@@ -73,7 +73,7 @@ class EventController extends Controller
                 'max:10000',  // 🔴 Rozumný limit
             ],
             'packages.*.photo_limit_person' => [
-                'nullable',
+                'required',
                 'integer',
                 'min:0',
                 'max:1000',  // 🔴 Maximálne fotky na osobu
@@ -196,7 +196,7 @@ class EventController extends Controller
                 'max:10000',
             ],
             'packages.*.photo_limit_person' => [
-                'nullable',
+                'required',
                 'integer',
                 'min:0',
                 'max:1000',
@@ -298,7 +298,6 @@ class EventController extends Controller
             $overlay_data += $landing ? ['landing_img' => $landing] : [];
             $overlay_data += $frame   ? ['frame_img'   => $frame]   : [];
 
-            // Přidej overlay settings pokud existují
             if (!empty($data['overlays']['frame_position'])) {
                 $overlay_data['frame_position'] = $data['overlays']['frame_position'];
             }
@@ -371,5 +370,49 @@ class EventController extends Controller
         return Inertia::render('Events/Orders/Index', [
             'event' => $event,
         ]);
+    }
+
+    function uploadFrameSvg(Request $request, Event $event) {
+        $this->authorize('update', $event);
+
+        $data = $request->validate([
+            'frame_svg' => 'required|file|mimetypes:image/svg+xml|max:2048',
+        ]);
+
+        $file = $data['frame_svg'];
+        $user_id = auth()->id();
+
+        // 🔴 SECURITY: Validuj extension
+        if ($file->getClientOriginalExtension() !== 'svg') {
+            return back()->withErrors(['frame_svg' => 'Neplatný typ souboru']);
+        }
+
+        Storage::disk('private')->putFileAs(
+            "user_{$user_id}/event_{$event->id}/overlays",
+            $file,
+            'frame.svg'
+        );
+
+        // Aktualizuj overlay záznam
+        $event->overlays()->updateOrCreate(
+            ['event_id' => $event->id],
+            ['frame_svg' => true]  // Označíme, že máme frame svg
+        );
+
+        return back()->with('success', 'SVG rám byl úspěšně nahrán!');
+    }
+
+    function exportAsCsv(Event $event) {
+        $this->authorize('view', $event);
+
+        $csvData = "ID,Name,Email,Package,Created At\n";
+        foreach ($event->orders as $order) {
+            $csvData .= "{$order->id},\"{$order->guest->name}\",\"{$order->guest->email}\",\"{$order->items->pluck('name')->join(', ')}\",{$order->created_at}\n";
+        }
+
+        return response($csvData, 200)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="event_orders.csv"');
+
     }
 }

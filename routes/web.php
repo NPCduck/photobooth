@@ -25,6 +25,10 @@ Route::get('/', function () {
 
 
 // Private image routes
+Route::get('/private-svg/user_{user_id}/event_{event_id}/{path}/{file}', [ImageController::class, 'showSvgFrame'])
+    ->where('path', '.*')
+    ->name('private.frameSvg');
+
 Route::get('/private-image/user_{user_id}/event_{event_id}/{path?}/{file}', [ImageController::class, 'showPrivateImage'])
         ->where('path', '.*')
         ->name('private.image');
@@ -113,13 +117,17 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Events
     Route::resource('events', EventController::class);
-    Route::get('/events/{event}/photos', [EventController::class, 'photos'])->name('events.photos');
+    Route::get('/events/{event}/photos', [EventController::class, 'photos'])
+        ->name('events.photos');
 
-    Route::get('events/{event}/orders', [EventController::class, 'ordersIndex'])->name('events.orders.index');
+    Route::get('events/{event}/orders', [EventController::class, 'ordersIndex'])
+        ->name('events.orders.index');
     Route::post('/events/{event}/orders/bulk', [EventOrderController::class, 'bulkAction'])
         ->name('orders.bulkAction');
     Route::get('/events/{event}/orders/{order}', [EventOrderController::class, 'show'])
         ->name('events.orders.show');
+
+    Route::post('events/{event}/frame-svg', [EventController::class, 'uploadFrameSvg'])->name('events.frameSvg.upload');
     
     // Private photo access
     Route::get('private/image/{path}', [PhotoController::class, 'getPhotoUrl'])

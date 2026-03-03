@@ -73,4 +73,35 @@ class ImageController extends Controller
             ->header('Content-Type', $mime)
             ->header('Content-Disposition', 'inline');
     }
+
+    function showSvgFrame($user_id, $event_id, $path, $file) {
+        // 🔴 SECURITY: Autorizácia - musí byť vlastník
+        if ((int)$user_id !== auth()->id()) {
+            abort(403, 'Nemáte oprávnenie pristupovať k tomuto súboru');
+        }
+
+        $event = Event::where('id', $event_id)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        // 🔴 SECURITY: Kontrola ownership
+        if ($event->user_id !== auth()->id()) {
+            abort(403, 'Nemáte oprávnění přistupovat k tomuto souboru');
+        }
+
+        $fullPath = "user_{$user_id}/event_{$event_id}/{$path}/{$file}";
+
+        if (!Storage::disk('private')->exists($fullPath)) {
+            abort(404, 'Soubor nenalezen!');
+        }
+
+        
+
+        $content = Storage::disk('private')->get($fullPath);
+        $mime = Storage::disk('private')->mimeType($fullPath);
+
+        return response($content, 200)
+            ->header('Content-Type', $mime)
+            ->header('Content-Disposition', 'inline');
+    }
 }

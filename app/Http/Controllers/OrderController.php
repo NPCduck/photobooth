@@ -64,12 +64,12 @@ class OrderController extends Controller
         Event $event,
         int $packageId
     ): Order {
-        // 🔴 SECURITY: Balík MUSÍ patriť k eventu!
+        // 🔴 SECURITY: Balík MUSÍ patriť k eventu
         $package = EventPackage::where('id', $packageId)
             ->where('event_id', $event->id)
             ->firstOrFail();
 
-        // 🔴 SECURITY: Snapshot ceny - nikdy sa nezmení!
+        // 🔴 SECURITY: Snapshot ceny - nikdy sa nezmení
         $snapshotPrice = $package->price;
 
         $order = Order::create([
@@ -95,7 +95,6 @@ class OrderController extends Controller
 
     /**
      * Detail objednávky podľa kódu (guest pohľad)
-     * 🔴 SECURITY: Iba autentifikovaní useri - iba vlastné objednávky
      */
     public function showByCode(string $code) {
         // 🔴 SECURITY: Iba autentifikovaní useri - iba vlastné objednávky

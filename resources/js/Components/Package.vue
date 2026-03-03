@@ -38,6 +38,9 @@
                 <input type="checkbox" :id="'packageUnlimitedPhotosPerson-' + id" v-model="readonly" ref="checkBoxRef" class="bg-overlaybg border-0 rounded-md">
                 <label :for="'packageUnlimitedPhotosPerson-' + id">Neobmedzený počet</label>
             </div>
+            <p v-if="errors.photo_limit_person" class="text-sm text-red-600 font-bold">
+                {{ errors.photo_limit_person }}
+            </p>
         </div>
         <div v-if="!isFirst" class="absolute top-[50%] translate-y-[-50%] right-[-40px] bg-red-600 rounded-md p-1 hover:bg-red-700 flex items-center">
             <button
