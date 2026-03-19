@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Models\Event;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class EventController extends Controller
 {
@@ -372,6 +373,9 @@ class EventController extends Controller
         ]);
     }
 
+
+    //SVG FRAME
+
     function uploadFrameSvg(Request $request, Event $event) {
         $this->authorize('update', $event);
 
@@ -402,17 +406,196 @@ class EventController extends Controller
         return back()->with('success', 'SVG rám byl úspěšně nahrán!');
     }
 
-    function exportAsCsv(Event $event) {
-        $this->authorize('view', $event);
+    function deleteFrameSvg(Event $event) {
+        $this->authorize('update', $event);
 
-        $csvData = "ID,Name,Email,Package,Created At\n";
-        foreach ($event->orders as $order) {
-            $csvData .= "{$order->id},\"{$order->guest->name}\",\"{$order->guest->email}\",\"{$order->items->pluck('name')->join(', ')}\",{$order->created_at}\n";
+        $user_id = $event->user_id;
+        $path = "user_{$user_id}/event_{$event->id}/overlays/frame.svg";
+
+        DB::transaction(function () use ($event, $path) {
+            // Odstráň soubor, pokud existuje
+             if (Storage::disk('private')->exists($path)) {
+                Storage::disk('private')->delete($path);
+            }
+
+            // Aktualizuj overlay záznam
+            $event->overlays()->update(
+                ['frame_svg' => false]  // Označíme, že nemáme frame svg
+            );
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'SVG rám bol úspešne odstránený!'
+        ]);
+    }
+
+    function uploadLandingImg(Request $request, Event $event) {
+        $this->authorize('update', $event);
+
+        $data = $request->validate([
+            'landing_img' => 'required|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
+        ]);
+
+        $file = $data['landing_img'];
+        $user_id = auth()->id();
+
+        // 🔴 SECURITY: Validuj extension
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+        $extension = strtolower($file->getClientOriginalExtension());
+        if (!in_array($extension, $allowedExtensions)) {
+            return back()->withErrors(['landing_img' => 'Neplatný typ souboru']);
         }
 
-        return response($csvData, 200)
-            ->header('Content-Type', 'text/csv')
-            ->header('Content-Disposition', 'attachment; filename="event_orders.csv"');
+        Storage::disk('private')->putFileAs(
+            "user_{$user_id}/event_{$event->id}/overlays",
+            $file,
+            'landing_img.'.$extension
+        );
 
+        // Aktualizuj overlay záznam
+        $event->overlays()->updateOrCreate(
+            ['event_id' => $event->id],
+            ['landing_img' => true]  // Označíme, že máme landing img
+        );
+
+        return back()->with('success', 'Landing image byl úspěšně nahrán!');
+    }
+
+    function deleteLandingImg(Event $event) {
+        $this->authorize('update', $event);
+
+        $user_id = $event->user_id;
+        $pathPattern = "user_{$user_id}/event_{$event->id}/overlays/landing_img.*";
+
+        // Najdi existující landing image
+        $files = Storage::disk('private')->files("user_{$user_id}/event_{$event->id}/overlays");
+        $landingFile = collect($files)->first(function ($file) use ($pathPattern) {
+            return fnmatch($pathPattern, $file);
+        });
+
+        if ($landingFile) {
+            Storage::disk('private')->delete($landingFile);
+        }
+
+        // Aktualizuj overlay záznam
+        $event->overlays()->update(
+            ['landing_img' => false]  // Označíme, že nemáme landing img
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Landing image byl úspěšně odstraněn!'
+        ]);
+    }
+
+    function uploadFrameImg(Request $request, Event $event) {
+        $this->authorize('update', $event);
+
+        $data = $request->validate([
+            'frame_img' => 'required|file|mimetypes:image/jpeg,image/png,image/webp|max:4096',
+        ]);
+
+        $file = $data['frame_img'];
+        $user_id = auth()->id();
+
+        // 🔴 SECURITY: Validuj extension
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+        $extension = strtolower($file->getClientOriginalExtension());
+        if (!in_array($extension, $allowedExtensions)) {
+            return back()->withErrors(['frame_img' => 'Neplatný typ souboru']);
+        }
+
+        Storage::disk('private')->putFileAs(
+            "user_{$user_id}/event_{$event->id}/overlays",
+            $file,
+            'frame_img.'.$extension
+        );
+
+        // Aktualizuj overlay záznam
+        $event->overlays()->updateOrCreate(
+            ['event_id' => $event->id],
+            ['frame_img' => true]  // Označíme, že máme frame img
+        );
+
+        return back()->with('success', 'Overlay image byl úspěšně nahrán!');
+    }
+
+    function deleteFrameImg(Event $event) {
+        $this->authorize('update', $event);
+
+        $user_id = $event->user_id;
+        $pathPattern = "user_{$user_id}/event_{$event->id}/overlays/frame_img.*";
+
+        // Najdi existující frame image
+        $files = Storage::disk('private')->files("user_{$user_id}/event_{$event->id}/overlays");
+        $frameFile = collect($files)->first(function ($file) use ($pathPattern) {
+            return fnmatch($pathPattern, $file);
+        });
+
+        if ($frameFile) {
+            Storage::disk('private')->delete($frameFile);
+        }
+
+        // Aktualizuj overlay záznam
+        $event->overlays()->update(
+            ['frame_img' => false]  // Označíme, že nemáme frame img
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Overlay image byl úspěšně odstraněn!'
+        ]);
+    }
+
+    function exportData(Event $event, $type) {
+        $this->authorize('view', $event);
+
+        if ($type === 'emails') {
+            $guests = $event->guests()
+                ->with('package')
+                ->get();
+            if ($guests->isEmpty()) {
+                return back()->with('error', 'Neexistujú žiadne záznamy o hosťoch!');
+            }
+
+            $csvData = "Email, Balík, Cena, Počet_fotiek\n";
+            foreach ($guests as $guest) {
+                $packageNames = $guest->package->pluck('name')->join(';');
+                $packagePrices = $guest->package->pluck('price')->join(';');
+                $photoCount = $guest->photos_uploaded;
+                $csvData .= "\"{$guest->email}\",\"{$packageNames}\",\"{$packagePrices}\",\"{$photoCount}\"\n";
+            }
+
+            $fileName = "event_{$event->id}_emails.csv";
+            return response($csvData)
+                ->header('Content-Type', 'text/csv')
+                ->header('Content-Disposition', "attachment; filename=\"{$fileName}\"");
+
+        } else if ($type === 'photos') {
+            $photos = $event->photos()->get();
+
+            if ($photos->isEmpty()) {
+                return back()->with('error', 'Neexistujú židne záznamy o fotkách!');
+            }
+
+            $zipFileName = "user_{$event->user_id}/event_{$event->id}/photos.zip";
+            $zipFilePath = storage_path("app/private/{$zipFileName}");
+            $zip = new \ZipArchive();
+            
+            if ($zip->open($zipFilePath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+                foreach ($photos as $photo) {
+                    $photoPath = storage_path("app/private/{$photo->path}");
+                    if (file_exists($photoPath)) {
+                        $zip->addFile($photoPath, basename($photoPath));
+                    }
+                }
+                $zip->close();
+
+                return response()->download($zipFilePath)->deleteFileAfterSend(true);
+            } else {
+                return back()->with('error', 'Nepodarilo sa vytvoriť ZIP súbor!');
+            }
+        }
     }
 }

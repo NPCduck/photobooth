@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 
+use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\EnsureUserIsSubscribed;
+
 use Inertia\Inertia;
 
 Route::get('/', function () {
@@ -22,6 +25,12 @@ Route::get('/', function () {
         'canRegister' => Route::has('register'),
     ]);
 })->name('landing');
+
+Route::get('/subscription', function () {
+    return Inertia::render('Subscription/SubscriptionPlans', [
+        'plans' => \App\Models\SubscriptionPlan::where('is_active', true)->get(),
+    ]);
+})->name('subscription.plans');
 
 
 // Private image routes
@@ -64,7 +73,8 @@ Route::post('/orders/create-for-guest', [OrderController::class, 'storeForGuest'
     ->middleware('throttle:10,1')
     ->name('orders.createForGuest');
 
-Route::middleware('auth:sanctum')->group(function () {
+// ==================== USER AUTHORIZED ROUTES ====================
+Route::middleware('auth', 'subscribed')->group(function () {  
     Route::get('/dashboard', function () {
         $totalEvents = auth()->user()->events()->count();
 
@@ -127,8 +137,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/events/{event}/orders/{order}', [EventOrderController::class, 'show'])
         ->name('events.orders.show');
 
-    Route::post('events/{event}/frame-svg', [EventController::class, 'uploadFrameSvg'])->name('events.frameSvg.upload');
-    
+    Route::post('events/{event}/frame-svg', [EventController::class, 'uploadFrameSvg'])
+        ->name('events.frameSvg.upload');
+
+    Route::get('events/{event}/export/{type}', [EventController::class, 'exportData'])
+        ->name('events.export');
+
+    Route::delete('events/{event}/frame-svg', [EventController::class, 'deleteFrameSvg'])
+        ->name('events.frameSvg.delete');
+
+    Route::post('events/{event}/landing-img', [EventController::class, 'uploadLandingImg'])
+        ->name('events.landingImg.upload');
+    Route::delete('events/{event}/landing-img', [EventController::class, 'deleteLandingImg'])
+        ->name('events.landingImg.delete');
+
+    Route::post('events/{event}/frame-img', [EventController::class, 'uploadFrameImg'])
+        ->name('events.frameImg.upload');
+    Route::delete('events/{event}/frame-img', [EventController::class, 'deleteFrameImg'])
+        ->name('events.frameImg.delete');
+
+
     // Private photo access
     Route::get('private/image/{path}', [PhotoController::class, 'getPhotoUrl'])
         ->where('path', '.*')
@@ -145,6 +173,20 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     
     Route::get('orders/{code}', [OrderController::class, 'showByCode'])->name('orders.show.bycode');
+});
+// ==================== - END - USER AUTHORIZED ROUTES ====================
+
+// ==================== ADMIN AUTHORIZED ROUTES ====================
+Route::middleware(['auth', AdminMiddleware::class])->group(function () {
+    // Admin dashboard
+    Route::get('/admin', function () {
+        $events = \App\Models\Event::with('user')->get();
+        $users = \App\Models\User::all();
+        return Inertia::render('Admin/Dashboard', compact('events', 'users'));
+    })->name('admin.dashboard');
+
+    // User management
+    Route::get('/admin/users', [ProfileController::class, 'index'])->name('admin.users.index');
 });
 
 require __DIR__.'/auth.php';

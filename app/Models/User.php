@@ -21,6 +21,8 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'is_subscribed',
+        'stripe_plan_id',
     ];
 
     /**
@@ -58,5 +60,10 @@ class User extends Authenticatable
 
     public function actions() {
         return $this->hasManyThrough(Action::class, Event::class);
+    }
+
+    public function subscriptionPlan()
+    {
+        return $this->belongsTo(SubscriptionPlan::class);
     }
 }

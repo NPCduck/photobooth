@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ProfileController extends Controller
 {
@@ -43,17 +45,23 @@ class ProfileController extends Controller
     /**
      * Delete the user's account.
      */
-    public function destroy(Request $request): RedirectResponse
-    {
+    public function destroy(Request $request): RedirectResponse {
         $request->validate([
             'password' => ['required', 'current_password'],
         ]);
 
-        $user = $request->user();
+        DB::transaction(function () use ($request) {
+                $user = $request->user();
+    
+                // 🔴 SECURITY: Odstránime všetky súkromné súbory používateľa
+                if (Storage::disk('private')->exists("user_{$user->id}")) {
+                    Storage::disk('private')->deleteDirectory("user_{$user->id}");
+                }
+    
+                $user->delete();
+        });
 
         Auth::logout();
-
-        $user->delete();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();

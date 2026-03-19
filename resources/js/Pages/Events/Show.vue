@@ -9,9 +9,11 @@ const props = defineProps({
     qrurl: String,
 })
 
-const overlayPosition = ref(props.event.overlays?.frame_position || 'center');
-const overlayStretch = ref(props.event.overlays?.frame_stretch !== false);
 const svgFile = ref(null);
+const svgFrameWrapper = ref(null);
+
+const landingImgFile = ref(null);
+const frameImgFile = ref(null);
 
 
 function getImg(path, filename) {
@@ -29,6 +31,7 @@ function getImg(path, filename) {
     return route('private.image', params);
 }
 
+// QR
 function getQr(filename) {
     const eventId = props.event.id;
     const userId = props.event.user_id;
@@ -41,6 +44,14 @@ function getQr(filename) {
     return route('private.qrcode', params);
 }
 
+function activateQr() {
+    router.post(route('events.qr.activate', props.event.id));
+}
+function deactivateQr() {
+    router.post(route('events.qr.deactivate', props.event.id));
+}
+
+// SVG
 function getSvgFrame() {
     return route('private.frameSvg', {
         user_id: props.event.user_id,
@@ -69,48 +80,112 @@ async function uploadSvgFrame() {
             },
             body: formData,
         });
-        // Prípadne reload alebo notifikácia
         window.location.reload();
     } catch (e) {
         alert('Chyba pri nahrávaní SVG!');
     }
 }
 
-function activateQr() {
-    router.post(route('events.qr.activate', props.event.id));
-}
-function deactivateQr() {
-    router.post(route('events.qr.deactivate', props.event.id));
+async function deleteSvgFrame() {
+    if (!confirm('Opravdu chcete odstranit SVG rám? Tato akce je nevratná.')) {
+        return;
+    }
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    try {
+        const response = await fetch(route('events.frameSvg.delete', { event: props.event.id }), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+            },
+        });
+
+        if (!response.ok) throw new Error('Chyba pri vymazávaní SVG rámu.');
+
+        // Aktualizuj reaktívny stav
+        props.event.overlays.frame_svg = false;
+
+    } catch (e) {
+        alert(e.message);
+    }
 }
 
-function saveOverlaySettings() {
-    router.patch(route('events.update', props.event.id), {
-        name: props.event.name,
-        details: {
-            type: props.event.details.type,
-            hosts: props.event.details.hosts,
-            status: props.event.details.status,
-            date: props.event.details.date,
-            time_start: props.event.details.time_start,
-            time_end: props.event.details.time_end,
-            loc_venue: props.event.details.loc_venue,
-            loc_address: props.event.details.loc_address,
+async function uploadFrameLandingImgs() {
+    if (frameImgFile.value.files.length === 0 || landingImgFile.value.files.length === 0) {
+        alert('Vyberte obrázok k nahratiu!');
+        return;
+    }
+
+    const requests = [];
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    if (landingImgFile.value.files.length > 0) {
+        const formData = new FormData();
+        formData.append('landing_img', landingImgFile.value.files[0]);
+
+        requests.push(fetch(route('events.landingImg.upload', props.event.id), {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            body: formData
+        }));
+    }
+
+    if (frameImgFile.value.files.length > 0) {
+        const formData = new FormData();
+        formData.append('frame_img', frameImgFile.value.files[0]);
+
+        requests.push(fetch(route('events.frameImg.upload', props.event.id), {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': csrfToken },
+            body: formData
+        }));
+    }
+
+    try {
+        await Promise.all(requests); // 🔥 parallel upload
+        window.location.reload();
+    } catch (e) {
+        alert('Chyba pri nahrávaní');
+    }
+}
+
+function deleteFrameImg() {
+    if (!confirm('Opravdu chcete odstranit obrázek překryvu? Tato akce je nevratná.')) {
+        return;
+    }
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch(route('events.frameImg.delete', { event: props.event.id }), {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
         },
-        client: {
-            name: props.event.client.name,
-            email: props.event.client.email,
-            phone: props.event.client.phone,
-        },
-        packages: props.event.packages,
-        overlays: {
-            frame_position: overlayPosition.value,
-            frame_stretch: overlayStretch.value,
-        }
-    }, {
-        preserveScroll: true,
+    }).then(response => {
+        if (!response.ok) throw new Error('Chyba při vymazávání obrázku překryvu.');
+        props.event.overlays.frame_img = false;
+    }).catch(e => {
+        alert(e.message);
     });
 }
 
+function deleteLandingImg() {
+    if (!confirm('Opravdu chcete odstranit obrázek stránky? Tato akce je nevratná.')) {
+        return;
+    }
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+    fetch(route('events.landingImg.delete', { event: props.event.id }), {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': csrfToken,
+        },
+    }).then(response => {
+        if (!response.ok) throw new Error('Chyba při vymazávání obrázku stránky.');
+        props.event.overlays.landing_img = false;
+    }).catch(e => {
+        alert(e.message);
+    });
+}
 </script>
 
 <template>
@@ -295,58 +370,50 @@ function saveOverlaySettings() {
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-overlaybg rounded-md p-3 sm:p-4">
                         <div class="bg-white p-4 flex flex-col rounded-md gap-4">
                             <p class="font-semibold">Obrázok stránky</p>
-                            <img
-                                v-if="props.event.overlays.landing_img"
-                                :src="getImg('overlays', 'landing_img')"
-                                class="w-full max-h-[400px] object-contain mx-auto"
-                            />
-                            <p v-else>Nemáte nahratý súbor</p>
+                            <div v-if="props.event.overlays.landing_img" class="flex flex-col items-center">
+                                <img
+                                    :src="getImg('overlays', 'landing_img')"
+                                    class="w-full max-h-[400px] object-contain mx-auto"
+                                />
+                                <button @click="deleteLandingImg" class="bg-red-600 text-white p-3 rounded-md hover:bg-red-700 font-semibold mt-4">
+                                    Zmazať
+                                </button>
+                            </div>
+                            <div v-else class="flex flex-col items-center">
+                                <p >Nemáte nahratý súbor</p>
+                                <form @submit.prevent="uploadFrameLandingImgs()" class="w-full mt-4">
+                                    <input type="file" name="landing_img" ref="landingImgFile" accept=".jpg,.jpeg,.png" class="border rounded px-3 py-2 w-full">
+                                    <button type="submit" class="bg-sidebarbg text-white p-3 rounded-md hover:bg-sidebarbg-dark font-semibold w-full mt-2">
+                                        Nahrať
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            
                         </div>
 
                         <div class="bg-white p-4 flex flex-col rounded-md gap-4">
                             <p class="font-semibold">Obrázok prekrytia</p>
-                            <img
-                                v-if="props.event.overlays.frame_img"
-                                :src="getImg('overlays', 'frame_img')"
-                                class="max-h-48 sm:max-h-64 object-contain mx-auto"
-                            />
-                            <p v-else>Nemáte nahratý súbor</p>
+                            <div v-if="props.event.overlays.frame_img" class="flex flex-col items-center">
+                                <img
+                                    :src="getImg('overlays', 'frame_img')"
+                                    class="max-h-48 sm:max-h-64 object-contain mx-auto"
+                                />
+                                <button @click="deleteFrameImg" class="bg-red-600 text-white p-3 rounded-md hover:bg-red-700 font-semibold mt-4">
+                                    Zmazať
+                                </button>
+                            </div>
+                            <div v-else class="flex flex-col items-center">
+                                <p>Nemáte nahratý súbor</p>
+                                 <form @submit.prevent="uploadFrameLandingImgs()" class="w-full mt-4">
+                                    <input type="file" name="frame_img" ref="frameImgFile" accept=".jpg,.jpeg,.png" class="border rounded px-3 py-2 w-full">
+                                    <button type="submit" class="bg-sidebarbg text-white p-3 rounded-md hover:bg-sidebarbg-dark font-semibold w-full mt-2">
+                                        Nahrať
+                                    </button>
+                                </form>
+                            </div>
+                            
                         </div>
-                    </div>
-                </div>
-
-                <!-- OVERLAY NASTAVENIA -->
-                <div class="flex flex-col bg-white p-4 shadow rounded-md gap-4" v-if="props.event.overlays?.frame_img">
-                    <p class="font-thin text-xl sm:text-2xl md:text-[25px]">Nastavenia prekrytia</p>
-
-                    <div class="bg-overlaybg rounded-md p-3 sm:p-4 flex flex-col gap-4">
-                        <!-- Pozícia -->
-                        <div class="bg-white p-4 rounded-md flex flex-col gap-3">
-                            <label class="font-semibold">Pozícia overlay:</label>
-                            <select v-model="overlayPosition" class="border rounded px-3 py-2">
-                                <option value="stretch">Roztiahnutý (celá fotka)</option>
-                                <option value="top-left">Ľavý horný roh</option>
-                                <option value="top-right">Pravý horný roh</option>
-                                <option value="bottom-left">Ľavý dolný roh</option>
-                                <option value="bottom-right">Pravý dolný roh</option>
-                                <option value="center">Stred</option>
-                            </select>
-                        </div>
-
-                        <!-- Rozťahovanie -->
-                        <div class="bg-white p-4 rounded-md flex flex-col gap-3">
-                            <label class="flex items-center gap-2">
-                                <input type="checkbox" v-model="overlayStretch" class="w-4 h-4">
-                                <span class="font-semibold">Rozťahovať overlay na veľkosť fotky</span>
-                            </label>
-                            <p class="text-sm text-gray-600">
-                                Ak je zapnuté, overlay sa roztiahne na rozmery fotky. Ak je vypnuté, zachová si pôvodnú veľkosť a pozícií podľa zvoleného rohu.
-                            </p>
-                        </div>
-
-                        <button @click="saveOverlaySettings" class="bg-sidebarbg text-white p-3 rounded-md hover:bg-sidebarbg-dark font-semibold">
-                            Uložiť nastavenia
-                        </button>
                     </div>
                 </div>
 
@@ -368,12 +435,18 @@ function saveOverlaySettings() {
                         />
                     </div>
                     <div class="p-4 text-center">
-                        <form class="grid grid-cols-2 gap-4"
+                        <form class="grid grid-cols-1 md:grid-cols-3 gap-4"
                             @submit.prevent="uploadSvgFrame"
                         >
                             <input type="file" name="frame_svg" ref="svgFile" accept=".svg" class="border rounded px-3 py-2 w-full">
                             <button type="submit" class="bg-sidebarbg text-white p-3 rounded-md hover:bg-sidebarbg-dark font-semibold">
                                 Nahrať SVG rám
+                            </button>
+                            <button
+                                @click.prevent="deleteSvgFrame"
+                                class="bg-red-600 text-white p-3 rounded-md hover:bg-red-700 font-semibold"
+                            >
+                                Odstrániť SVG rám
                             </button>
                         </form>
                     </div>
@@ -413,22 +486,13 @@ function saveOverlaySettings() {
                     <p class="font-thin text-[25px]">
                         Exportovať dáta
                     </p>
-                    <div class="flex flex-col gap-4">
-                        <form @submit.prevent="extractPhotos" class="flex flex-col gap-4">
-                            <div class="flex flex-row gap-4 items-center">
-                                <input type="radio" name="exportType" id="exportEmail">
-                                <label for="exportEmial">Email list (CSV)</label>
-                            </div>
-
-                            <div class="flex flex-row gap-4 items-center">
-                                <input type="radio" name="exportType" id="exportZip">
-                                <label for="exportEmial">Fotky (ZIP)</label>
-                            </div>
-
-                            <button class="bg-sidebarbg text-white self-start p-2 rounded-md hover:bg-sidebarbg-dark">
-                                Exportovať
-                            </button>
-                        </form>
+                    <div class="flex flex-row gap-4">
+                        <a :href="route('events.export', { event: props.event.id, type: 'emails' })" class="bg-sidebarbg text-white p-2 rounded-md hover:bg-sidebarbg-dark">
+                            Exportovať emaily (CSV)
+                        </a>
+                        <a :href="route('events.export', { event: props.event.id, type: 'photos' })" class="bg-sidebarbg text-white p-2 rounded-md hover:bg-sidebarbg-dark">
+                            Exportovať fotky (ZIP)
+                        </a>
                     </div>
                 </div>
             </div>

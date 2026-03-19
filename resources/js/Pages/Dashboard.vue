@@ -21,6 +21,15 @@ function minAgo (timestamp) {
     const now = new Date();
     const diffMs = now - created;
     const diffMin = Math.floor(diffMs / 1000 / 60);
+
+    if (diffMin < 1) return 'práve teraz';
+    else if (diffMin === 1) return '1 minúta';
+    else if (diffMin < 60) return `${diffMin} minút`;
+    else if (diffMin < 120) return '1 hodina';
+    else if (diffMin < 1440) return `${Math.floor(diffMin / 60)} hodín`;
+    else if (diffMin < 2880) return '1 deň';
+    else if (diffMin < 43200) return `${Math.floor(diffMin / 1440)} dní`;
+
     return diffMin;
 }
 </script>
@@ -129,7 +138,7 @@ function minAgo (timestamp) {
 
                             <template #ago>
                                 <span class="text-xs md:text-sm text-gray-500">
-                                    {{ minAgo(action.created_at) }} min
+                                    {{ minAgo(action.created_at) }}
                                 </span>
                             </template>
                         </ActionItem>

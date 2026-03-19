@@ -1,17 +1,23 @@
 <script setup>
-import { Link } from '@inertiajs/vue3'
+
+import { Link, usePage } from '@inertiajs/vue3'
 import { route } from 'ziggy-js'
 import {
   LayoutDashboard,
   Calendar,
   User,
   LogOut,
+  Shield,
 } from 'lucide-vue-next'
 
 defineProps({
   isOpen: Boolean,
 })
 defineEmits(['close'])
+
+
+const page = usePage();
+const isAdmin = page.props.auth?.user?.is_admin;
 
 const menuItems = [
   {
@@ -33,6 +39,17 @@ const menuItems = [
       { label: 'Spravovať účet', route: 'profile.edit' },
     ],
   },
+  // Admin section (hidden for non-admins)
+  ...(isAdmin ? [
+    {
+      label: 'Admin',
+      icon: Shield,
+      children: [
+        { label: 'Admin Dashboard', route: 'admin.dashboard' },
+        { label: 'Používatelia', route: 'admin.users.index' },
+      ],
+    },
+  ] : []),
 ]
 
 const isActive = (name) => route().current(name)
@@ -66,13 +83,13 @@ const isActive = (name) => route().current(name)
       <!-- Logo -->
       <div>
         <div class="p-4 text-center text-[25px] font-bold">
-          PhotoBooth
+          <img src="/photobooth_w.svg" alt="">
         </div>
 
         <!-- Nav -->
         <nav class="mx-4 p-4 bg-sidebarbg-dark rounded-md space-y-2">
-          <ul>
-            <li v-for="item in menuItems" :key="item.label">
+          <ul class="flex flex-col gap-2">
+            <li v-for="item in menuItems" :key="item.label" class="flex flex-col gap-1">
               <Link
                 v-if="item.children"
                 :href="route(item.children[0].route)"
@@ -84,7 +101,7 @@ const isActive = (name) => route().current(name)
                 {{ item.label }}
               </Link>
 
-              <ul v-if="item.children" class="ml-6 mt-1 space-y-1">
+              <ul v-if="item.children" class="ml-6 mt-1 space-y-1 flex flex-col gap-1">
                 <li v-for="child in item.children" :key="child.route">
                   <Link
                     :href="route(child.route)"

@@ -83,7 +83,7 @@ class PhotoController extends Controller
 
             // Uloženie fotky - bezpečný názov súboru
             $path = "user_{$event->user_id}/event_{$event->id}/photos";
-            $filename = uniqid('photo_', true) . '.jpg';
+            $filename = uniqid('photo_', true) . '.png';
 
             Storage::disk('private')->putFileAs(
                 $path,
